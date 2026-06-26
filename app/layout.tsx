@@ -1,6 +1,8 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
+import { AppSidebar } from '@/components/app-sidebar'
+import { TopBar } from '@/components/top-bar'
 import './globals.css'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
@@ -10,8 +12,9 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'ECIRAP — Enterprise Commercial Intelligence & Revenue Assurance',
+  description:
+    'Pipeline visibility, strategic account management, forecasting and revenue leakage prevention for enterprise commercial operations.',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -46,9 +49,18 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} bg-background`}
+    >
       <body className="font-sans antialiased">
-        {children}
+        <div className="flex min-h-screen">
+          <AppSidebar />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <TopBar />
+            <main className="flex-1 p-4 md:p-8">{children}</main>
+          </div>
+        </div>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
