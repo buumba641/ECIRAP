@@ -10,6 +10,11 @@ import {
   Wallet,
   ShieldCheck,
   Radar,
+  Building2,
+  FileText,
+  Heart,
+  BarChart3,
+  UserCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -18,7 +23,12 @@ const nav = [
   { href: "/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/leads", label: "Leads", icon: Users },
   { href: "/pipeline", label: "Pipeline", icon: TrendingUp },
+  { href: "/accounts", label: "Accounts", icon: Building2 },
+  { href: "/contracts", label: "Contracts", icon: FileText },
   { href: "/revenue", label: "Revenue & ROI", icon: Wallet },
+  { href: "/intelligence", label: "Intelligence", icon: BarChart3 },
+  { href: "/community", label: "Community", icon: Heart },
+  { href: "/performance", label: "Performance", icon: UserCheck },
 ]
 
 export function AppSidebar() {
