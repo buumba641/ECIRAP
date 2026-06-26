@@ -1,33 +1,96 @@
-# ECIRAP
+# ECIRAP - Enterprise Commercial Intelligence & Revenue Assurance Platform
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+A comprehensive commercial intelligence platform designed to manage campaigns, leads, opportunities, contracts, and revenue tracking. Built with [Next.js](https://nextjs.org), [Supabase](https://supabase.com), and deployed on [Vercel](https://vercel.com).
 
-## Built with v0
+## Live Demo
 
-This repository is linked to a [v0](https://v0.app) project. You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+**Production Deployment:** https://ecirap.vercel.app
 
-[Continue working on v0 →](https://v0.app/chat/projects/prj_os7Xk7CPnPCEeXGJrXwUty6axkpu)
+**Alternative URL:** https://ecirap-bk3zswqmb-buumbachinjila-6022s-projects.vercel.app
+
+## Features
+
+- **Dashboard** - Executive overview with KPIs, revenue charts, pipeline metrics, and real-time alerts
+- **Campaign Management** - Track campaigns across multiple channels with budget, ROI, and performance metrics
+- **Lead Management** - Manage leads with status tracking, qualification scores, and ownership assignment
+- **Sales Pipeline** - Kanban-style pipeline with weighted forecasting and opportunity grading
+- **Revenue Intelligence** - ROI attribution by campaign, region, and salesperson with revenue forecasting
+
+## Tech Stack
+
+- **Frontend:** Next.js 16, React 19, TypeScript, Tailwind CSS
+- **Backend:** Node.js with Server Actions
+- **Database:** Supabase (PostgreSQL)
+- **Deployment:** Vercel
+- **Built with:** v0 AI
+
+## Database Schema
+
+The platform uses 8 interconnected tables:
+
+- `organizations` - Company information and industry classification
+- `campaigns` - Marketing and sales campaigns with budget and ROI tracking
+- `leads` - Lead records with qualification scores and ownership
+- `opportunities` - Sales opportunities with probability and value
+- `contracts` - Signed contracts linked to opportunities
+- `revenue_transactions` - Revenue records with transaction history
+- `community_engagements` - Community and event engagement tracking
+- `profiles` - User profiles linked to organizations
 
 ## Getting Started
 
-First, run the development server:
+### Local Development
+
+First, install dependencies:
+
+```bash
+npm install
+```
+
+Then, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment Variables
+
+The following environment variables are required:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
+```
+
+These are automatically configured in the Vercel deployment.
+
+## Pages
+
+- `/` - Dashboard with KPI overview and analytics
+- `/campaigns` - Campaign list and management
+- `/campaigns/[id]` - Campaign detail view
+- `/leads` - Lead management and tracking
+- `/pipeline` - Sales pipeline with opportunity stages
+- `/revenue` - Revenue intelligence and forecasting
+
+## Development
+
+To continue developing:
+
+1. Edit files in the `app/` and `components/` directories
+2. Changes are reflected automatically with hot module replacement
+3. Commit changes to the `enterprise-commercial-intelligence-platform` branch
+4. Push to deploy automatically
+
+## Built with v0
+
+This repository is linked to a [v0](https://v0.app) project for AI-assisted development.
 
 ## Learn More
 
-To learn more, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Supabase Documentation](https://supabase.com/docs)
+- [Vercel Documentation](https://vercel.com/docs)
+- [v0 Documentation](https://v0.app/docs)
