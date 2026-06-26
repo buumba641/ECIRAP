@@ -10,9 +10,16 @@ A comprehensive commercial intelligence platform designed to manage campaigns, l
 
 ## Features
 
+### User Roles & Authentication
+- **8 Role-Based Dashboards**: CEO, Manager, Sales, Cashier, Analyst, Accountant, User, HR
+- **Role-Specific UI**: Each role has dedicated modules and metrics tailored to their responsibilities
+- **HR Admin Panel** (`/hr-admin`): Create, edit, and delete user accounts with role assignment
+- **Login System** (`/login`): Click-to-login demo with user avatar selection by role
+- **Session Management**: Persistent authentication with role-based access control
+
 ### Core Modules
-- **Dashboard** - Executive overview with KPIs, revenue charts, pipeline metrics, and real-time alerts
-- **Campaign Management** - Track campaigns across multiple channels with budget, ROI, and performance metrics
+- **Dashboard** - Role-specific executive overviews with KPIs, revenue charts, pipeline metrics, and real-time alerts
+- **Campaign Management** - Track campaigns with timeline milestones, revenue graphs by period, and ROI metrics
 - **Lead Management** - Manage leads with status tracking, qualification scores, and ownership assignment
 - **Sales Pipeline** - Kanban-style pipeline with weighted forecasting and opportunity grading
 - **Revenue Intelligence** - ROI attribution by campaign, region, and salesperson with revenue forecasting
@@ -24,6 +31,12 @@ A comprehensive commercial intelligence platform designed to manage campaigns, l
 - **Commercial Intelligence** - Advanced analytics with revenue by region, pipeline distribution, and conversion trends
 - **Employee Performance** - Track sales team productivity, conversion rates, and deal quality metrics
 
+### Campaign Analytics
+- **Campaign Timeline** - Visual milestones showing campaign phases (Launch, Mid-Review, Final Sprint)
+- **Revenue by Period** - Bar charts showing daily revenue during campaign timeline
+- **Cumulative Growth** - Line charts showing total revenue accumulation from campaign start to present
+- **Period Metrics** - Daily average, peak revenue, and total campaign revenue calculations
+
 ## Tech Stack
 
 - **Frontend:** Next.js 16, React 19, TypeScript, Tailwind CSS
@@ -34,7 +47,7 @@ A comprehensive commercial intelligence platform designed to manage campaigns, l
 
 ## Database Schema
 
-The platform uses 8 interconnected tables:
+The platform uses 13 interconnected tables:
 
 - `organizations` - Company information and industry classification
 - `campaigns` - Marketing and sales campaigns with budget and ROI tracking
@@ -44,6 +57,10 @@ The platform uses 8 interconnected tables:
 - `revenue_transactions` - Revenue records with transaction history
 - `community_engagements` - Community and event engagement tracking
 - `profiles` - User profiles linked to organizations
+- `user_roles` - Role definitions (CEO, Manager, Sales, Cashier, Analyst, Accountant, User, HR)
+- `auth_users` - User authentication with role assignment and permissions
+- `campaign_milestones` - Campaign phases and timeline tracking
+- `daily_revenue` - Daily revenue tracking for campaign analytics
 
 ## Getting Started
 
@@ -76,10 +93,17 @@ These are automatically configured in the Vercel deployment.
 
 ## Pages
 
+### Authentication
+- `/login` - User role selection and login page with avatar click-to-login
+- `/dashboard` - Role-specific dashboard routing to appropriate user interface
+
+### User Management
+- `/hr-admin` - HR admin panel for creating, editing, and deleting user accounts
+
 ### Operations
 - `/` - Dashboard with KPI overview and analytics
 - `/campaigns` - Campaign list and management
-- `/campaigns/[id]` - Campaign detail view
+- `/campaigns/[id]` - Campaign detail with timeline milestones and revenue graphs
 - `/leads` - Lead management and tracking
 - `/pipeline` - Sales pipeline with opportunity stages
 
@@ -90,6 +114,13 @@ These are automatically configured in the Vercel deployment.
 - `/intelligence` - Advanced commercial intelligence and analytics
 - `/performance` - Employee and team performance metrics
 - `/revenue` - Revenue intelligence and ROI forecasting
+
+### API Endpoints
+- `POST /api/auth/login` - User authentication endpoint
+- `GET /api/users` - Retrieve all users
+- `POST /api/users` - Create new user (HR admin only)
+- `PUT /api/users/[id]` - Update user details (HR admin only)
+- `DELETE /api/users/[id]` - Delete user (HR admin only)
 
 ## Development
 
