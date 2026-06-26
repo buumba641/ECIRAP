@@ -10,11 +10,19 @@ A comprehensive commercial intelligence platform designed to manage campaigns, l
 
 ## Features
 
+### Core Modules
 - **Dashboard** - Executive overview with KPIs, revenue charts, pipeline metrics, and real-time alerts
 - **Campaign Management** - Track campaigns across multiple channels with budget, ROI, and performance metrics
 - **Lead Management** - Manage leads with status tracking, qualification scores, and ownership assignment
 - **Sales Pipeline** - Kanban-style pipeline with weighted forecasting and opportunity grading
 - **Revenue Intelligence** - ROI attribution by campaign, region, and salesperson with revenue forecasting
+
+### Strategic Modules
+- **Strategic Accounts** - Manage customer relationships, decision makers, account health, and revenue contribution
+- **Contract Management** - Monitor contract lifecycle, signed agreements, and renewal tracking
+- **Community Engagements** - Track community events, activations, and measure engagement impact
+- **Commercial Intelligence** - Advanced analytics with revenue by region, pipeline distribution, and conversion trends
+- **Employee Performance** - Track sales team productivity, conversion rates, and deal quality metrics
 
 ## Tech Stack
 
@@ -68,12 +76,20 @@ These are automatically configured in the Vercel deployment.
 
 ## Pages
 
+### Operations
 - `/` - Dashboard with KPI overview and analytics
 - `/campaigns` - Campaign list and management
 - `/campaigns/[id]` - Campaign detail view
 - `/leads` - Lead management and tracking
 - `/pipeline` - Sales pipeline with opportunity stages
-- `/revenue` - Revenue intelligence and forecasting
+
+### Strategic Management
+- `/accounts` - Strategic account portfolio with customer relationships
+- `/contracts` - Contract lifecycle management and tracking
+- `/community` - Community engagement events and impact measurement
+- `/intelligence` - Advanced commercial intelligence and analytics
+- `/performance` - Employee and team performance metrics
+- `/revenue` - Revenue intelligence and ROI forecasting
 
 ## Development
 
