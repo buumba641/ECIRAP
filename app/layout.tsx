@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { AppSidebar } from '@/components/app-sidebar'
 import { TopBar } from '@/components/top-bar'
+import { AuthProvider } from '@/lib/auth-context'
 import './globals.css'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
@@ -54,14 +55,16 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} bg-background`}
     >
       <body className="font-sans antialiased">
-        <div className="flex min-h-screen">
-          <AppSidebar />
-          <div className="flex min-w-0 flex-1 flex-col">
-            <TopBar />
-            <main className="flex-1 p-4 md:p-8">{children}</main>
+        <AuthProvider>
+          <div className="flex min-h-screen">
+            <AppSidebar />
+            <div className="flex min-w-0 flex-1 flex-col">
+              <TopBar />
+              <main className="flex-1 p-4 md:p-8">{children}</main>
+            </div>
           </div>
-        </div>
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+          {process.env.NODE_ENV === 'production' && <Analytics />}
+        </AuthProvider>
       </body>
     </html>
   )
