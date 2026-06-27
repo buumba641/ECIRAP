@@ -1,11 +1,11 @@
-"use client"
+'use client'
 
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { Building2, LogOut } from "lucide-react"
+import { usePathname } from "next/navigation"
+import { Building2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
-import { Button } from "@/components/ui/button"
+import { UserProfileMenu } from "@/components/user-profile-menu"
 
 const nav = [
   { href: "/", label: "Dashboard" },
@@ -17,25 +17,23 @@ const nav = [
 
 export function TopBar() {
   const pathname = usePathname()
-  const router = useRouter()
-  const { user, logout } = useAuth()
-
-  const handleLogout = () => {
-    logout()
-    router.push('/login')
-  }
+  const { user } = useAuth()
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur md:px-8">
+      {/* Left: User Profile (Gmail Style) */}
       <div className="flex items-center gap-2">
-        <Building2 className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium">ECIRAP</span>
-        <span className="hidden rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-accent-foreground sm:inline">
-          Enterprise
-        </span>
+        {user ? (
+          <UserProfileMenu />
+        ) : (
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">ECIRAP</span>
+          </div>
+        )}
       </div>
 
-      {/* Mobile nav */}
+      {/* Center: Mobile nav */}
       <nav className="flex gap-1 overflow-x-auto md:hidden">
         {nav.map((item) => {
           const active =
@@ -57,30 +55,13 @@ export function TopBar() {
         })}
       </nav>
 
-      <div className="hidden items-center gap-4 md:flex">
-        {user && (
-          <>
-            <div className="text-right leading-tight">
-              <p className="text-xs font-medium">{user.full_name}</p>
-              <p className="text-[11px] text-muted-foreground">{user.role}</p>
-            </div>
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold text-white"
-              style={{ backgroundColor: user.avatar_color }}
-            >
-              {user.full_name.charAt(0)}
-            </div>
-            <Button
-              onClick={handleLogout}
-              variant="ghost"
-              size="sm"
-              className="gap-2"
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
-          </>
-        )}
+      {/* Right: Logo/Title */}
+      <div className="hidden items-center gap-2 md:flex">
+        <Building2 className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-medium">ECIRAP</span>
+        <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-accent-foreground">
+          Enterprise
+        </span>
       </div>
     </header>
   )
