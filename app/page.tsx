@@ -48,6 +48,11 @@ export default async function DashboardPage() {
     .sort((a, b) => b.value - a.value)
     .slice(0, 4)
 
+  const recentContracts = [...contracts]
+    .filter((c) => c.status === "Signed" || c.status === "Active")
+    .sort((a, b) => new Date(b.signed_date || b.created_at).getTime() - new Date(a.signed_date || a.created_at).getTime())
+    .slice(0, 4)
+
   const unassignedLeads = leads.filter((l) => !l.owner).length
   const stalledOpps = opportunities.filter(
     (o) => o.stage === "Qualified" && o.probability < 50,
@@ -176,40 +181,77 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      <Card className="mt-6">
-        <CardHeader className="flex-row items-center justify-between">
-          <CardTitle>Top Open Opportunities</CardTitle>
-          <Link
-            href="/pipeline"
-            className="inline-flex items-center gap-1 text-xs font-medium text-primary"
-          >
-            All opportunities <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {topOpps.map((o) => (
-            <div
-              key={o.id}
-              className="flex items-center justify-between rounded-lg border border-border p-3"
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader className="flex-row items-center justify-between">
+            <CardTitle>Top Open Opportunities</CardTitle>
+            <Link
+              href="/pipeline"
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary"
             >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{o.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {o.owner} · {o.stage}
-                </p>
+              All opportunities <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            {topOpps.map((o) => (
+              <div
+                key={o.id}
+                className="flex items-center justify-between rounded-lg border border-border p-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{o.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {o.owner} · {o.stage}
+                  </p>
+                </div>
+                <div className="ml-3 text-right">
+                  <p className="text-sm font-semibold">
+                    {formatCurrency(o.value, true)}
+                  </p>
+                  <Badge variant="secondary" className="mt-0.5 text-[10px]">
+                    {o.probability}% · {o.grade}
+                  </Badge>
+                </div>
               </div>
-              <div className="ml-3 text-right">
-                <p className="text-sm font-semibold">
-                  {formatCurrency(o.value, true)}
-                </p>
-                <Badge variant="secondary" className="mt-0.5 text-[10px]">
-                  {o.probability}% · {o.grade}
-                </Badge>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex-row items-center justify-between">
+            <CardTitle>Recent Revenue Events (Invoices)</CardTitle>
+            <Link
+              href="/contracts"
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary"
+            >
+              All revenue events <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            {recentContracts.map((c) => (
+              <div
+                key={c.id}
+                className="flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:border-primary/40 cursor-pointer"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{c.name}</p>
+                  <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                    INV-{c.id.substring(0,6).toUpperCase()} · {new Date(c.signed_date || c.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="ml-3 text-right">
+                  <p className="text-sm font-semibold text-green-600">
+                    +{formatCurrency(c.amount, true)}
+                  </p>
+                  <Badge variant="outline" className="mt-0.5 text-[10px]">
+                    {c.status}
+                  </Badge>
+                </div>
               </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

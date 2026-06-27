@@ -4,10 +4,15 @@ export type Campaign = {
   type: string
   channel?: string | null
   budget: number
+  target_revenue?: number
+  target_leads?: number
   start_date: string | null
   end_date: string | null
   status: string
   objective: string | null
+  location?: string | null
+  province?: string | null
+  district?: string | null
   region?: string | null
   branch?: string | null
   created_at: string

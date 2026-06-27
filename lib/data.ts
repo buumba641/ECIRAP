@@ -98,23 +98,86 @@ export function conversionRate(leads: Lead[]): number {
 export function revenueByCampaign(
   campaigns: Campaign[],
   contracts: Contract[],
+  leads: Lead[] = [],
 ) {
   return campaigns
     .map((c) => {
-      const revenue = contracts
-        .filter((ct) => ct.campaign_id === c.id)
-        .reduce((s, ct) => s + Number(ct.amount), 0)
+      const campContracts = contracts.filter((ct) => ct.campaign_id === c.id)
+      const revenue = campContracts.reduce((s, ct) => s + Number(ct.amount), 0)
       const budget = Number(c.budget)
+      const campLeads = leads.filter((l) => l.campaign_id === c.id)
+      const leadCount = campLeads.length
+      const convertedLeads = campLeads.filter(l => l.status === "Converted").length
+      const costPerLead = leadCount > 0 ? budget / leadCount : 0
+      const costPerCustomer = convertedLeads > 0 ? budget / convertedLeads : 0
+      
+      // Calculate a simple effectiveness score (0-100)
+      let score = 0
+      if (budget > 0) {
+        const roiScore = Math.min((revenue / budget) * 20, 40) // up to 40 pts for ROI
+        const conversionScore = leadCount > 0 ? (convertedLeads / leadCount) * 40 : 0 // up to 40 pts for conversion
+        const volumeScore = Math.min((leadCount / (c.target_leads || 100)) * 20, 20) // up to 20 pts for volume
+        score = Math.round(roiScore + conversionScore + volumeScore)
+      }
+
       return {
         id: c.id,
         name: c.name,
+        type: c.type,
         channel: c.channel ?? c.type,
         budget,
         revenue,
+        leads: leadCount,
+        convertedLeads,
+        costPerLead,
+        costPerCustomer,
         roi: budget ? revenue / budget : 0,
         net: revenue - budget,
+        score,
+        province: c.province,
       }
     })
+    .sort((a, b) => b.revenue - a.revenue)
+}
+
+/** Time-based revenue analysis for a single campaign */
+export function campaignRevenueTimeline(campaignId: string, contracts: Contract[]) {
+  const campContracts = contracts.filter(c => c.campaign_id === campaignId && c.signed_date)
+  
+  const map = new Map<string, number>()
+  for (const ct of campContracts) {
+    const month = new Date(ct.signed_date!).toISOString().slice(0, 7) // YYYY-MM
+    map.set(month, (map.get(month) ?? 0) + Number(ct.amount))
+  }
+  
+  return Array.from(map.entries())
+    .map(([month, revenue]) => ({ month, revenue }))
+    .sort((a, b) => a.month.localeCompare(b.month))
+}
+
+export function campaignCustomerLTV(campaignId: string, contracts: Contract[], leads: Lead[]) {
+  const campContracts = contracts.filter(c => c.campaign_id === campaignId)
+  const campLeads = leads.filter(l => l.campaign_id === campaignId && l.status === "Converted")
+  
+  const revenue = campContracts.reduce((s, ct) => s + Number(ct.amount), 0)
+  const customers = campLeads.length
+  
+  return {
+    ltv: customers > 0 ? revenue / customers : 0,
+    customers,
+    revenue
+  }
+}
+
+export function revenueByProvince(campaigns: Campaign[], contracts: Contract[]) {
+  const map = new Map<string, number>()
+  for (const ct of contracts) {
+    const camp = campaigns.find((c) => c.id === ct.campaign_id)
+    const prov = camp?.province ?? "Unassigned"
+    map.set(prov, (map.get(prov) ?? 0) + Number(ct.amount))
+  }
+  return Array.from(map.entries())
+    .map(([province, revenue]) => ({ province, revenue }))
     .sort((a, b) => b.revenue - a.revenue)
 }
 

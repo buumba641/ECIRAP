@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { getEnterpriseData, leadsByStatus } from "@/lib/data"
+import { ExportButtons } from "@/components/export-buttons"
 
 export default async function LeadsPage() {
   const { leads, campaigns } = await getEnterpriseData()
@@ -22,7 +23,9 @@ export default async function LeadsPage() {
       <PageHeader
         title="Lead Management"
         description="Centralised lead capture with qualification scoring and ownership — the first stage of the commercial pipeline."
-      />
+      >
+        <ExportButtons data={leads} />
+      </PageHeader>
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Card>

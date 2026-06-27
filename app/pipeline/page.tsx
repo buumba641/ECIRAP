@@ -16,6 +16,7 @@ import {
   openPipelineValue,
 } from "@/lib/data"
 import { formatCurrency } from "@/lib/format"
+import { ExportButtons } from "@/components/export-buttons"
 
 const STAGES = ["Qualified", "Negotiation", "Closed Won"]
 
@@ -31,7 +32,9 @@ export default async function PipelinePage() {
       <PageHeader
         title="Sales Pipeline & Forecasting"
         description="Every opportunity scored, weighted by win probability, and graded — producing an accurate revenue forecast."
-      />
+      >
+        <ExportButtons data={opportunities} />
+      </PageHeader>
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>

@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { CampaignTimeline } from "@/components/campaign-timeline"
 import { getEnterpriseData } from "@/lib/data"
 import { formatCurrency, formatDate, formatPercent } from "@/lib/format"
 
@@ -38,6 +39,25 @@ export default async function CampaignDetailPage({
   const convRate = campLeads.length
     ? (converted / campLeads.length) * 100
     : 0
+
+  const milestones = [
+    { name: "Campaign Launched", date: campaign.start_date || campaign.created_at, status: "Completed" as const },
+    { name: "First Lead Generated", date: campLeads[campLeads.length - 1]?.created_at || new Date().toISOString(), status: campLeads.length > 0 ? "Completed" as const : "Pending" as const },
+    { name: "First Customer Converted", date: campOpps.find(o => o.stage === "Closed Won")?.created_at || new Date().toISOString(), status: converted > 0 ? "Completed" as const : "Pending" as const },
+  ]
+
+  let cumulative = 0;
+  const revenueData = campContracts
+    .filter(c => c.signed_date)
+    .sort((a, b) => new Date(a.signed_date!).getTime() - new Date(b.signed_date!).getTime())
+    .map(c => {
+      cumulative += Number(c.amount)
+      return {
+        date: c.signed_date!.substring(0, 10),
+        revenue: Number(c.amount),
+        cumulative
+      }
+    })
 
   return (
     <div>
@@ -93,6 +113,16 @@ export default async function CampaignDetailPage({
           value={campOpps.filter((o) => o.stage === "Closed Won").length}
         />
         <Funnel label="Conversion" value={formatPercent(convRate)} />
+      </div>
+
+      <div className="mb-6">
+        <CampaignTimeline
+          campaignName={campaign.name}
+          startDate={campaign.start_date || campaign.created_at}
+          endDate={campaign.end_date || new Date().toISOString()}
+          milestones={milestones}
+          revenueData={revenueData}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

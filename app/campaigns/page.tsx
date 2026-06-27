@@ -3,6 +3,8 @@ import { ChevronRight, Megaphone } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
 import { Card, CardContent } from "@/components/ui/card"
 import { StatusBadge } from "@/components/status-badge"
+import { AIInsights } from "@/components/ai-insights"
+import { ExportButtons } from "@/components/export-buttons"
 import {
   getEnterpriseData,
   revenueByCampaign,
@@ -12,8 +14,8 @@ import {
 import { formatCurrency } from "@/lib/format"
 
 export default async function CampaignsPage() {
-  const { campaigns, contracts } = await getEnterpriseData()
-  const rev = revenueByCampaign(campaigns, contracts)
+  const { campaigns, contracts, leads } = await getEnterpriseData()
+  const rev = revenueByCampaign(campaigns, contracts, leads)
   const revMap = new Map(rev.map((r) => [r.id, r]))
 
   const totalRev = totalRevenue(contracts)
@@ -24,7 +26,11 @@ export default async function CampaignsPage() {
       <PageHeader
         title="Campaign Management"
         description="Track marketing investment across every channel and follow it through to attributed revenue and ROI."
-      />
+      >
+        <ExportButtons data={rev} />
+      </PageHeader>
+
+      <AIInsights />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <SummaryStat label="Total Invested" value={formatCurrency(totalBud, true)} />
@@ -57,15 +63,19 @@ export default async function CampaignsPage() {
                     <StatusBadge value={c.status} />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 border-t border-border pt-3">
+                  <div className="grid grid-cols-4 gap-2 border-t border-border pt-3">
                     <Metric label="Budget" value={formatCurrency(c.budget, true)} />
                     <Metric
                       label="Revenue"
                       value={formatCurrency(r?.revenue ?? 0, true)}
                     />
                     <Metric
-                      label="ROI"
-                      value={`${(r?.roi ?? 0).toFixed(1)}x`}
+                      label="Leads"
+                      value={r?.leads.toString() ?? "0"}
+                    />
+                    <Metric
+                      label="Score"
+                      value={r?.score ? `${r.score}/100` : "0/100"}
                       accent
                     />
                   </div>
