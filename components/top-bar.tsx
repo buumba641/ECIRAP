@@ -2,10 +2,10 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Building2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
 import { UserProfileMenu } from "@/components/user-profile-menu"
+import { ECIRAPLogo } from "@/components/ecirap-logo"
 
 const nav = [
   { href: "/", label: "Dashboard" },
@@ -27,7 +27,7 @@ export function TopBar() {
           <UserProfileMenu />
         ) : (
           <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <ECIRAPLogo size={20} />
             <span className="text-sm font-medium">ECIRAP</span>
           </div>
         )}
@@ -57,7 +57,7 @@ export function TopBar() {
 
       {/* Right: Logo/Title */}
       <div className="hidden items-center gap-2 md:flex">
-        <Building2 className="h-4 w-4 text-muted-foreground" />
+        <ECIRAPLogo size={20} />
         <span className="text-sm font-medium">ECIRAP</span>
         <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-accent-foreground">
           Enterprise

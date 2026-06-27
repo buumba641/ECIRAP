@@ -9,7 +9,6 @@ import {
   TrendingUp,
   Wallet,
   ShieldCheck,
-  Radar,
   Building2,
   FileText,
   Heart,
@@ -17,6 +16,7 @@ import {
   UserCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ECIRAPLogo } from "@/components/ecirap-logo"
 
 const nav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -37,8 +37,8 @@ export function AppSidebar() {
   return (
     <aside className="hidden md:flex w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex items-center gap-2.5 px-5 h-16 border-b border-sidebar-border">
-        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-          <Radar className="h-5 w-5" />
+        <div className="flex h-9 w-9 items-center justify-center rounded-md">
+          <ECIRAPLogo size={32} />
         </div>
         <div className="leading-tight">
           <p className="text-sm font-semibold tracking-tight">ECIRAP</p>
