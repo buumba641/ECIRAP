@@ -1,0 +1,23 @@
+'use client'
+
+import { useAuth } from '@/lib/auth-context'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+
+export default function AnalystDashboard() {
+  const router = useRouter()
+  const { user, loading } = useAuth()
+
+  useEffect(() => {
+    if (!loading && (!user || user.role !== 'Analyst')) {
+      router.push('/login')
+    }
+  }, [user, loading, router])
+
+  return (
+    <div className="p-8">
+      <h1 className="text-3xl font-bold mb-4">Analyst Dashboard</h1>
+      <p className="text-muted-foreground">Advanced analytics and reporting</p>
+    </div>
+  )
+}

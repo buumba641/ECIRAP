@@ -3,50 +3,38 @@
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import CEODashboard from '@/components/dashboards/ceo-dashboard'
-import ManagerDashboard from '@/components/dashboards/manager-dashboard'
-import SalesDashboard from '@/components/dashboards/sales-dashboard'
-import CashierDashboard from '@/components/dashboards/cashier-dashboard'
-import AnalystDashboard from '@/components/dashboards/analyst-dashboard'
-import AccountantDashboard from '@/components/dashboards/accountant-dashboard'
-import UserDashboard from '@/components/dashboards/user-dashboard'
-import HRDashboard from '@/components/dashboards/hr-dashboard'
 
 export default function DashboardPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return
+
+    if (!user) {
       router.push('/login')
+      return
     }
+
+    // Route to role-specific dashboard
+    const dashboardPaths: Record<string, string> = {
+      CEO: '/dashboard/ceo',
+      Manager: '/dashboard/manager',
+      Sales: '/dashboard/sales',
+      Cashier: '/dashboard/cashier',
+      Analyst: '/dashboard/analyst',
+      Accountant: '/dashboard/accountant',
+      HR: '/dashboard/hr',
+      Marketing: '/dashboard/marketing',
+    }
+
+    const path = dashboardPaths[user.role] || '/dashboard/sales'
+    router.push(path)
   }, [user, loading, router])
 
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>
-  }
-
-  if (!user) {
-    return null
-  }
-
-  // Route to role-specific dashboard
-  switch (user.role) {
-    case 'CEO':
-      return <CEODashboard />
-    case 'Manager':
-      return <ManagerDashboard />
-    case 'Sales':
-      return <SalesDashboard />
-    case 'Cashier':
-      return <CashierDashboard />
-    case 'Analyst':
-      return <AnalystDashboard />
-    case 'Accountant':
-      return <AccountantDashboard />
-    case 'HR':
-      return <HRDashboard />
-    default:
-      return <UserDashboard />
-  }
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <p className="text-muted-foreground">Redirecting to your dashboard...</p>
+    </div>
+  )
 }

@@ -1,3 +1,4 @@
+// Agent Commissions API endpoint
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
@@ -18,48 +19,39 @@ export async function GET(request: NextRequest) {
               cookiesToSet.forEach(({ name, value, options }) =>
                 cookieStore.set(name, value, options)
               )
-            } catch {
-              // Handle set cookie errors
-            }
+            } catch { }
           },
         },
       }
     )
 
     const url = new URL(request.url)
+    const agentId = url.searchParams.get('agent_id')
     const branchId = url.searchParams.get('branch_id')
-    const role = url.searchParams.get('role')
 
-    let query = supabase.from('users').select('*').eq('is_active', true)
+    let query = supabase.from('agent_commissions_ledger').select('*')
 
-    if (branchId) {
-      query = query.eq('branch_id', branchId)
+    if (agentId) {
+      query = query.eq('user_id', agentId)
     }
 
-    if (role) {
-      query = query.eq('role', role)
-    }
-
-    const { data, error } = await query.order('created_at', { ascending: false })
+    const { data, error } = await query
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json(data)
+    return NextResponse.json(data || [])
   } catch (error) {
-    console.error('Error fetching users:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch users' },
-      { status: 500 }
-    )
+    console.error('Commissions fetch error:', error)
+    return NextResponse.json({ error: 'Failed to fetch commissions' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { branch_id, email, full_name, role, base_salary } = body
+    const { user_id, invoice_id, commission_amount, split_applied } = body
 
     const cookieStore = await cookies()
     const supabase = createServerClient(
@@ -75,25 +67,20 @@ export async function POST(request: NextRequest) {
               cookiesToSet.forEach(({ name, value, options }) =>
                 cookieStore.set(name, value, options)
               )
-            } catch {
-              // Handle set cookie errors
-            }
+            } catch { }
           },
         },
       }
     )
 
-    const { data, error } = await supabase
-      .from('users')
+    const { data: commission, error } = await supabase
+      .from('agent_commissions_ledger')
       .insert([
         {
-          branch_id,
-          email,
-          password_hash: '$2b$10$demo_hash', // Demo password
-          full_name,
-          role,
-          base_salary,
-          is_active: true,
+          user_id,
+          invoice_id,
+          commission_amount,
+          split_applied,
         },
       ])
       .select()
@@ -103,12 +90,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json(data, { status: 201 })
+    // Log to audit trail
+    await supabase.from('audits').insert([
+      {
+        action_type: 'commission_created',
+        user_involved: user_id,
+        details: {
+          ledger_id: commission.ledger_id,
+          amount: commission_amount,
+          split_applied,
+        },
+      },
+    ])
+
+    return NextResponse.json(commission, { status: 201 })
   } catch (error) {
-    console.error('Error creating user:', error)
-    return NextResponse.json(
-      { error: 'Failed to create user' },
-      { status: 500 }
-    )
+    console.error('Commission creation error:', error)
+    return NextResponse.json({ error: 'Failed to create commission' }, { status: 500 })
   }
 }

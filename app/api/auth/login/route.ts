@@ -28,21 +28,22 @@ export async function POST(request: NextRequest) {
       }
     )
 
-    // Query the auth_users table
-    const { data: users, error } = await supabase
-      .from('auth_users')
-      .select('id, email, full_name, role, avatar_color')
+    // Query the users table (Starlink CRM schema)
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('user_id, branch_id, email, full_name, role, is_active')
       .eq('email', email)
+      .eq('is_active', true)
       .single()
 
-    if (error || !users) {
+    if (error || !user) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
       )
     }
 
-    // Demo auth - in production, use proper password hashing
+    // Demo auth - in production, use proper password hashing with bcrypt
     if (password !== 'demo123') {
       return NextResponse.json(
         { error: 'Invalid credentials' },
@@ -52,11 +53,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       user: {
-        id: users.id,
-        email: users.email,
-        full_name: users.full_name,
-        role: users.role,
-        avatar_color: users.avatar_color,
+        user_id: user.user_id,
+        branch_id: user.branch_id,
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role,
+        is_active: user.is_active,
       },
     })
   } catch (error) {

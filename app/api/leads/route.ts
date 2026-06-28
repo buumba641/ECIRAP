@@ -1,6 +1,8 @@
+// Leads API endpoint - Create, read, and manage leads
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
+import type { Lead } from '@/lib/types'
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,48 +20,43 @@ export async function GET(request: NextRequest) {
               cookiesToSet.forEach(({ name, value, options }) =>
                 cookieStore.set(name, value, options)
               )
-            } catch {
-              // Handle set cookie errors
-            }
+            } catch { }
           },
         },
       }
     )
 
     const url = new URL(request.url)
+    const agentId = url.searchParams.get('agent_id')
     const branchId = url.searchParams.get('branch_id')
-    const role = url.searchParams.get('role')
 
-    let query = supabase.from('users').select('*').eq('is_active', true)
+    let query = supabase.from('leads').select('*')
+
+    if (agentId) {
+      query = query.eq('creator_agent_id', agentId)
+    }
 
     if (branchId) {
       query = query.eq('branch_id', branchId)
     }
 
-    if (role) {
-      query = query.eq('role', role)
-    }
-
-    const { data, error } = await query.order('created_at', { ascending: false })
+    const { data, error } = await query
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json(data)
+    return NextResponse.json(data || [])
   } catch (error) {
-    console.error('Error fetching users:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch users' },
-      { status: 500 }
-    )
+    console.error('Leads fetch error:', error)
+    return NextResponse.json({ error: 'Failed to fetch leads' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { branch_id, email, full_name, role, base_salary } = body
+    const { creator_agent_id, branch_id, phone_number, email_address, client_name, ai_summary_raw } = body
 
     const cookieStore = await cookies()
     const supabase = createServerClient(
@@ -75,25 +72,38 @@ export async function POST(request: NextRequest) {
               cookiesToSet.forEach(({ name, value, options }) =>
                 cookieStore.set(name, value, options)
               )
-            } catch {
-              // Handle set cookie errors
-            }
+            } catch { }
           },
         },
       }
     )
 
-    const { data, error } = await supabase
-      .from('users')
+    // Check for duplicate phone/email (global unique constraint)
+    const { data: existingLead } = await supabase
+      .from('leads')
+      .select('lead_id')
+      .or(`phone_number.eq.${phone_number},email_address.eq.${email_address}`)
+      .single()
+
+    if (existingLead) {
+      return NextResponse.json(
+        { error: 'Phone number or email already exists' },
+        { status: 409 }
+      )
+    }
+
+    // Create new lead
+    const { data: newLead, error } = await supabase
+      .from('leads')
       .insert([
         {
+          creator_agent_id,
           branch_id,
-          email,
-          password_hash: '$2b$10$demo_hash', // Demo password
-          full_name,
-          role,
-          base_salary,
-          is_active: true,
+          phone_number,
+          email_address,
+          client_name,
+          ai_summary_raw,
+          is_converted: false,
         },
       ])
       .select()
@@ -103,12 +113,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json(data, { status: 201 })
+    return NextResponse.json(newLead, { status: 201 })
   } catch (error) {
-    console.error('Error creating user:', error)
-    return NextResponse.json(
-      { error: 'Failed to create user' },
-      { status: 500 }
-    )
+    console.error('Lead creation error:', error)
+    return NextResponse.json({ error: 'Failed to create lead' }, { status: 500 })
   }
 }
