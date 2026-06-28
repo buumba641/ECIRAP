@@ -1,38 +1,69 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
-
-export type UserRole = 'CEO' | 'Manager' | 'Sales' | 'Cashier' | 'Analyst' | 'Accountant' | 'User' | 'HR'
+import type { UserRole } from './types'
 
 export interface AuthUser {
-  id: string
+  user_id: string
+  branch_id: string
   email: string
   full_name: string
   role: UserRole
-  avatar_color: string
+  is_active: boolean
+}
+
+export interface RolePermissions {
+  readCRM?: boolean
+  writeCRM?: boolean
+  readFinancial?: boolean
+  writeFinancial?: boolean
+  manageUsers?: boolean
+  approveDisbursement?: boolean
+  requestDisbursement?: boolean
+  logCampaigns?: boolean
+  readRoi?: boolean
+  readGlobal?: boolean
+  filterByBranch?: boolean
 }
 
 interface AuthContextType {
   user: AuthUser | null
   loading: boolean
+  permissions: RolePermissions | null
   login: (email: string, password: string) => Promise<void>
   logout: () => void
+  hasPermission: (permission: keyof RolePermissions) => boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+// Role-based permissions matrix
+const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
+  Sales: { readCRM: true, writeCRM: true, readRoi: true },
+  Cashier: { writeFinancial: true, readFinancial: true },
+  HR: { manageUsers: true, readCRM: true },
+  Marketing: { logCampaigns: true, readRoi: true },
+  Analyst: { readCRM: true, readFinancial: true, readRoi: true },
+  Accountant: { readFinancial: true, requestDisbursement: true, readCRM: true },
+  Manager: { readCRM: true, approveDisbursement: true, readFinancial: true, readRoi: true },
+  CEO: { readGlobal: true, filterByBranch: true, readCRM: true, readFinancial: true, readRoi: true },
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
+  const [permissions, setPermissions] = useState<RolePermissions | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     // Check if user is already logged in
-    const storedUser = localStorage.getItem('ecirap_user')
+    const storedUser = localStorage.getItem('starlink_user')
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser))
+        const parsedUser = JSON.parse(storedUser)
+        setUser(parsedUser)
+        setPermissions(ROLE_PERMISSIONS[parsedUser.role] || {})
       } catch (e) {
-        localStorage.removeItem('ecirap_user')
+        localStorage.removeItem('starlink_user')
       }
     }
     setLoading(false)
@@ -53,7 +84,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json()
       setUser(data.user)
-      localStorage.setItem('ecirap_user', JSON.stringify(data.user))
+      setPermissions(ROLE_PERMISSIONS[data.user.role] || {})
+      localStorage.setItem('starlink_user', JSON.stringify(data.user))
     } catch (error) {
       throw error
     } finally {
@@ -63,11 +95,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     setUser(null)
-    localStorage.removeItem('ecirap_user')
+    setPermissions(null)
+    localStorage.removeItem('starlink_user')
+  }
+
+  const hasPermission = (permission: keyof RolePermissions): boolean => {
+    return permissions?.[permission] ?? false
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, permissions, login, logout, hasPermission }}>
       {children}
     </AuthContext.Provider>
   )
