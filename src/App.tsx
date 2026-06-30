@@ -1,15 +1,67 @@
-import { useState } from 'react';
-import { Shield, Building2, Users, FileBarChart, CreditCard, Megaphone, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Shield, Building2, Users, FileBarChart, CreditCard, Megaphone, CheckCircle2, AlertCircle, Loader } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { ApiProvider, useApi } from './context/ApiContext';
 
 type Role = 'CEO' | 'Manager' | 'HR' | 'Analyst' | 'Marketing' | 'Cashier' | 'Sales' | 'Accountant';
 
-export default function App() {
+function AppContent() {
   const [currentRole, setCurrentRole] = useState<Role>('Sales');
   const [currentBranch, setCurrentBranch] = useState('Lusaka Downtown');
+  const [leads, setLeads] = useState<any[]>([]);
+  const [deals, setDeals] = useState<any[]>([]);
+  
+  const { currentUser, loading, error, fetchLeads, fetchDeals, fetchCurrentUser } = useApi();
+
+  useEffect(() => {
+    // Load initial user data
+    const userId = parseInt(localStorage.getItem('userId') || '1');
+    fetchCurrentUser(userId);
+  }, []);
+
+  useEffect(() => {
+    // Load leads and deals when user is set or role changes
+    if (currentUser) {
+      Promise.all([fetchLeads(), fetchDeals()]).then(([l, d]) => {
+        setLeads(l);
+        setDeals(d);
+      });
+    }
+  }, [currentUser, currentRole]);
 
   const branches = ['Lusaka Downtown', 'Kitwe Central', 'Livingstone Hub'];
   const roles: Role[] = ['CEO', 'Manager', 'HR', 'Analyst', 'Marketing', 'Cashier', 'Sales', 'Accountant'];
+
+  if (loading && !currentUser) {
+    return (
+      <div className="flex items-center justify-center h-screen w-full bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <Loader className="w-8 h-8 text-indigo-600 animate-spin" />
+          <p className="text-slate-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen w-full bg-slate-50">
+        <div className="bg-white p-8 rounded-lg border border-red-200 max-w-md">
+          <div className="flex items-center gap-3 mb-3">
+            <AlertCircle className="w-6 h-6 text-red-600" />
+            <h2 className="font-semibold text-red-900">Connection Error</h2>
+          </div>
+          <p className="text-sm text-red-700">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium text-sm transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-full bg-slate-50 text-slate-900 font-sans overflow-hidden">
@@ -158,7 +210,46 @@ function CEODashboard() {
   );
 }
 
+export default function App() {
+  return <AppContent />;
+}
+
 function SalesDashboard() {
+  const { createLead, convertLeadToDeal } = useApi();
+  const [showNewLeadForm, setShowNewLeadForm] = useState(false);
+  const [formData, setFormData] = useState({ phone_number: '', client_name: '', email_address: '' });
+  const [localLeads, setLocalLeads] = useState<any[]>([]);
+
+  const { fetchLeads } = useApi();
+
+  useEffect(() => {
+    fetchLeads().then(l => setLocalLeads(l || []));
+  }, []);
+
+  const handleCreateLead = async () => {
+    try {
+      await createLead(formData);
+      setFormData({ phone_number: '', client_name: '', email_address: '' });
+      setShowNewLeadForm(false);
+      const updated = await fetchLeads();
+      setLocalLeads(updated || []);
+    } catch (error) {
+      console.error('Failed to create lead:', error);
+    }
+  };
+
+  const handleConvertLead = async (leadId: number) => {
+    try {
+      await convertLeadToDeal(leadId);
+      const updated = await fetchLeads();
+      setLocalLeads(updated || []);
+    } catch (error) {
+      console.error('Failed to convert lead:', error);
+    }
+  };
+
+  const activeLeads = localLeads?.filter((l: any) => !l.conversion_timestamp) || [];
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-end">
@@ -166,26 +257,72 @@ function SalesDashboard() {
             <h3 className="text-2xl font-bold text-slate-900 tracking-tight">My Pipeline</h3>
             <p className="text-slate-500 text-sm mt-1">Track your leads and pending commissions.</p>
          </div>
-         <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium text-sm transition-colors shadow-sm">
+         <button 
+            onClick={() => setShowNewLeadForm(!showNewLeadForm)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium text-sm transition-colors shadow-sm"
+         >
            + New Lead
          </button>
       </div>
+
+      {showNewLeadForm && (
+        <div className="bg-white p-6 rounded-xl border border-indigo-200 shadow-sm">
+          <h4 className="font-semibold text-slate-900 mb-4">Add New Lead</h4>
+          <div className="space-y-4">
+            <input
+              type="text"
+              placeholder="Phone Number"
+              value={formData.phone_number}
+              onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+              className="w-full border border-slate-300 rounded-md p-2 text-slate-900"
+            />
+            <input
+              type="text"
+              placeholder="Client Name"
+              value={formData.client_name}
+              onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
+              className="w-full border border-slate-300 rounded-md p-2 text-slate-900"
+            />
+            <input
+              type="email"
+              placeholder="Email (optional)"
+              value={formData.email_address}
+              onChange={(e) => setFormData({ ...formData, email_address: e.target.value })}
+              className="w-full border border-slate-300 rounded-md p-2 text-slate-900"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleCreateLead}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium text-sm transition-colors"
+              >
+                Create Lead
+              </button>
+              <button
+                onClick={() => setShowNewLeadForm(false)}
+                className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-900 px-4 py-2 rounded-md font-medium text-sm transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-emerald-50 border border-emerald-100 p-5 rounded-xl shadow-sm">
-          <div className="text-emerald-800 text-sm font-medium mb-1">Instant Commissions</div>
-          <div className="text-2xl font-bold text-emerald-600">$1,250.00</div>
-          <div className="text-emerald-700/80 text-xs mt-2">From Full-Pay Clients</div>
+          <div className="text-emerald-800 text-sm font-medium mb-1">Total Leads</div>
+          <div className="text-2xl font-bold text-emerald-600">{activeLeads.length}</div>
+          <div className="text-emerald-700/80 text-xs mt-2">Active in pipeline</div>
         </div>
         <div className="bg-amber-50 border border-amber-100 p-5 rounded-xl shadow-sm">
-          <div className="text-amber-800 text-sm font-medium mb-1">Pending Leases</div>
-          <div className="text-2xl font-bold text-amber-600">8 Clients</div>
-          <div className="text-amber-700/80 text-xs mt-2">Stuck on Month 1</div>
+          <div className="text-amber-800 text-sm font-medium mb-1">Pending Conversion</div>
+          <div className="text-2xl font-bold text-amber-600">{activeLeads.length}</div>
+          <div className="text-amber-700/80 text-xs mt-2">Ready to convert</div>
         </div>
         <div className="bg-indigo-50 border border-indigo-100 p-5 rounded-xl shadow-sm">
-          <div className="text-indigo-800 text-sm font-medium mb-1">Unlocked Leases</div>
-          <div className="text-2xl font-bold text-indigo-600">$800.00</div>
-          <div className="text-indigo-700/80 text-xs mt-2">Hit Month 2+ (Migrated)</div>
+          <div className="text-indigo-800 text-sm font-medium mb-1">Converted</div>
+          <div className="text-2xl font-bold text-indigo-600">{localLeads?.filter((l: any) => l.conversion_timestamp).length || 0}</div>
+          <div className="text-indigo-700/80 text-xs mt-2">Deals created</div>
         </div>
       </div>
 
@@ -200,11 +337,11 @@ function SalesDashboard() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {[1,2,3].map(i => (
-              <tr key={i} className="hover:bg-slate-50 transition-colors">
+            {activeLeads?.slice(0, 5).map((lead: any) => (
+              <tr key={lead.lead_id} className="hover:bg-slate-50 transition-colors">
                 <td className="p-4">
-                  <div className="font-medium text-slate-900">John Doe {i}</div>
-                  <div className="text-xs text-slate-500">+260 97 123 456{i}</div>
+                  <div className="font-medium text-slate-900">{lead.client_name}</div>
+                  <div className="text-xs text-slate-500">{lead.phone_number}</div>
                 </td>
                 <td className="p-4">
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
@@ -212,10 +349,15 @@ function SalesDashboard() {
                   </span>
                 </td>
                 <td className="p-4 text-sm text-slate-600 max-w-xs truncate">
-                  Interested in Gen 2 Kit. Needs installation at farm...
+                  {lead.ai_summary_raw || 'No summary yet'}
                 </td>
                 <td className="p-4 text-right">
-                  <button className="text-sm font-medium text-indigo-600 hover:text-indigo-800">Convert</button>
+                  <button
+                    onClick={() => handleConvertLead(lead.lead_id)}
+                    className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                  >
+                    Convert
+                  </button>
                 </td>
               </tr>
             ))}
