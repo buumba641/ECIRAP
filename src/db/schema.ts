@@ -1,7 +1,7 @@
 import { relations } from 'drizzle-orm';
 import { boolean, integer, numeric, pgEnum, pgTable, serial, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
-export const userRoleEnum = pgEnum('user_role', ['Sales', 'HR', 'Analyst', 'Cashier', 'Marketing', 'Manager', 'CEO']);
+export const userRoleEnum = pgEnum('user_role', ['Sales', 'HR', 'Analyst', 'Cashier', 'Marketing', 'Manager', 'CEO', 'Accountant']);
 export const paymentTypeEnum = pgEnum('payment_type', ['Full_Pay', 'Lease']);
 export const invoiceStatusEnum = pgEnum('invoice_status', ['Pending', 'Closed_Approved', 'Shortage']);
 export const leaseStatusEnum = pgEnum('lease_status', ['Pending', 'Paid']);
