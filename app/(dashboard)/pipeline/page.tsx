@@ -16,11 +16,15 @@ import {
   openPipelineValue,
 } from "@/lib/data"
 import { formatCurrency } from "@/lib/format"
+import { OpportunityFormButton } from "@/components/forms/opportunity-form"
+import { StatusChanger } from "@/components/status-changer"
+import { DeleteButton } from "@/components/delete-button"
+import { updateOpportunityStage, deleteOpportunity } from "@/lib/actions"
 
 const STAGES = ["Qualified", "Negotiation", "Closed Won"]
 
 export default async function PipelinePage() {
-  const { opportunities, campaigns } = await getEnterpriseData()
+  const { opportunities, campaigns, leads } = await getEnterpriseData()
   const campMap = new Map(campaigns.map((c) => [c.id, c.name]))
   const byStage = pipelineByStage(opportunities)
   const weighted = weightedPipeline(opportunities)
@@ -31,7 +35,9 @@ export default async function PipelinePage() {
       <PageHeader
         title="Sales Pipeline & Forecasting"
         description="Every opportunity scored, weighted by win probability, and graded — producing an accurate revenue forecast."
-      />
+      >
+        <OpportunityFormButton campaigns={campaigns} leads={leads} />
+      </PageHeader>
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
@@ -80,16 +86,22 @@ export default async function PipelinePage() {
                       <p className="text-sm font-medium leading-tight">
                         {o.name}
                       </p>
-                      <StatusBadge value={o.grade} />
+                      <div className="flex items-center gap-1">
+                        <StatusBadge value={o.grade} />
+                        <DeleteButton id={o.id} action={deleteOpportunity} />
+                      </div>
                     </div>
                     <p className="text-lg font-semibold">
                       {formatCurrency(o.value, true)}
                     </p>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>{o.owner}</span>
-                      <span className="font-medium text-foreground">
-                        {o.probability}% win
-                      </span>
+                      <StatusChanger
+                        id={o.id}
+                        currentStatus={o.stage}
+                        statuses={STAGES}
+                        action={updateOpportunityStage}
+                      />
                     </div>
                   </CardContent>
                 </Card>
@@ -122,6 +134,13 @@ export default async function PipelinePage() {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {opportunities.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">
+                    No opportunities yet. Click &quot;New Opportunity&quot; to create one.
+                  </TableCell>
+                </TableRow>
+              )}
               {opportunities.map((o) => (
                 <TableRow key={o.id}>
                   <TableCell className="font-medium">{o.name}</TableCell>

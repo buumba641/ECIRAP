@@ -10,6 +10,7 @@ import {
   totalBudget,
 } from "@/lib/data"
 import { formatCurrency } from "@/lib/format"
+import { CampaignFormButton } from "@/components/forms/campaign-form"
 
 export default async function CampaignsPage() {
   const { campaigns, contracts } = await getEnterpriseData()
@@ -24,7 +25,9 @@ export default async function CampaignsPage() {
       <PageHeader
         title="Campaign Management"
         description="Track marketing investment across every channel and follow it through to attributed revenue and ROI."
-      />
+      >
+        <CampaignFormButton />
+      </PageHeader>
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <SummaryStat label="Total Invested" value={formatCurrency(totalBud, true)} />
@@ -34,6 +37,14 @@ export default async function CampaignsPage() {
           value={`${totalBud ? (totalRev / totalBud).toFixed(1) : "0"}x`}
         />
       </div>
+
+      {campaigns.length === 0 && (
+        <Card>
+          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+            No campaigns yet. Click &quot;New Campaign&quot; to get started.
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {campaigns.map((c) => {

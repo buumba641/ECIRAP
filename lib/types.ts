@@ -51,3 +51,14 @@ export type Contract = {
   signed_date: string | null
   created_at: string
 }
+
+export type Product = {
+  id: string
+  name: string
+  description: string | null
+  category: string
+  price: number
+  sku: string | null
+  in_stock: boolean
+  created_at: string
+}

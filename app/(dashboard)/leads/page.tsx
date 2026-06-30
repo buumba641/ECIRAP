@@ -11,6 +11,10 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { getEnterpriseData, leadsByStatus } from "@/lib/data"
+import { LeadFormButton } from "@/components/forms/lead-form"
+import { DeleteButton } from "@/components/delete-button"
+import { StatusChanger } from "@/components/status-changer"
+import { deleteLead, updateLeadStatus } from "@/lib/actions"
 
 export default async function LeadsPage() {
   const { leads, campaigns } = await getEnterpriseData()
@@ -22,7 +26,9 @@ export default async function LeadsPage() {
       <PageHeader
         title="Lead Management"
         description="Centralised lead capture with qualification scoring and ownership — the first stage of the commercial pipeline."
-      />
+      >
+        <LeadFormButton campaigns={campaigns} />
+      </PageHeader>
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Card>
@@ -52,10 +58,18 @@ export default async function LeadsPage() {
                 <TableHead>Campaign</TableHead>
                 <TableHead>Owner</TableHead>
                 <TableHead className="w-40">Score</TableHead>
-                <TableHead className="text-right">Status</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="w-10"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
+              {leads.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">
+                    No leads yet. Click &quot;New Lead&quot; to create your first lead.
+                  </TableCell>
+                </TableRow>
+              )}
               {leads.map((l) => (
                 <TableRow key={l.id}>
                   <TableCell>
@@ -82,8 +96,16 @@ export default async function LeadsPage() {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <StatusBadge value={l.status} />
+                  <TableCell>
+                    <StatusChanger
+                      id={l.id}
+                      currentStatus={l.status}
+                      statuses={["New", "Qualified", "Converted"]}
+                      action={updateLeadStatus}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <DeleteButton id={l.id} action={deleteLead} />
                   </TableCell>
                 </TableRow>
               ))}

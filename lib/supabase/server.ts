@@ -1,10 +1,6 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
-/**
- * Server-side Supabase client for ECIRAP.
- * Uses the public anon key; the demo schema has RLS disabled for read access.
- */
 export async function createClient() {
   const cookieStore = await cookies()
 
@@ -22,7 +18,7 @@ export async function createClient() {
               cookieStore.set(name, value, options),
             )
           } catch {
-            // Called from a Server Component; safe to ignore.
+            // Called from a Server Component — safe to ignore.
           }
         },
       },

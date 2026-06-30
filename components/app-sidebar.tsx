@@ -10,19 +10,49 @@ import {
   Wallet,
   ShieldCheck,
   Radar,
+  Package,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { createClient } from "@/lib/supabase/client"
+import { useState, useEffect } from "react"
 
-const nav = [
+type NavItem = {
+  href: string
+  label: string
+  icon: typeof LayoutDashboard
+  roles?: string[] // if undefined, visible to all roles
+}
+
+const allNav: NavItem[] = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/campaigns", label: "Campaigns", icon: Megaphone },
-  { href: "/leads", label: "Leads", icon: Users },
-  { href: "/pipeline", label: "Pipeline", icon: TrendingUp },
-  { href: "/revenue", label: "Revenue & ROI", icon: Wallet },
+  { href: "/campaigns", label: "Campaigns", icon: Megaphone, roles: ["CEO", "Manager", "Marketing", "Analyst"] },
+  { href: "/leads", label: "Leads", icon: Users, roles: ["CEO", "Manager", "Sales", "Marketing"] },
+  { href: "/pipeline", label: "Pipeline", icon: TrendingUp, roles: ["CEO", "Manager", "Sales", "Analyst"] },
+  { href: "/revenue", label: "Revenue & ROI", icon: Wallet, roles: ["CEO", "Manager", "Accountant", "Analyst"] },
+  { href: "/products", label: "Products", icon: Package },
 ]
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const [userRole, setUserRole] = useState<string | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      const { data } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single()
+      if (data) setUserRole(data.role)
+    })
+  }, [])
+
+  // Filter nav items based on role
+  const nav = allNav.filter(
+    (item) => !item.roles || !userRole || item.roles.includes(userRole),
+  )
 
   return (
     <aside className="hidden md:flex w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
@@ -67,6 +97,13 @@ export function AppSidebar() {
             )
           })}
         </ul>
+
+        {userRole && (
+          <div className="mt-4 rounded-md bg-sidebar-accent/30 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wider text-sidebar-foreground/40">Your Role</p>
+            <p className="text-sm font-semibold text-sidebar-primary">{userRole}</p>
+          </div>
+        )}
       </nav>
 
       <div className="mx-3 mb-4 rounded-lg border border-sidebar-border bg-sidebar-accent/40 p-3">

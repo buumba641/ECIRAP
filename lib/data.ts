@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
-import type { Campaign, Lead, Opportunity, Contract } from "@/lib/types"
+import type { Campaign, Lead, Opportunity, Contract, Product } from "@/lib/types"
 
 const OPEN_STAGES = ["Qualified", "Negotiation"]
 const WON_STAGE = "Closed Won"
@@ -38,6 +38,15 @@ export async function getContracts(): Promise<Contract[]> {
     .select("*")
     .order("signed_date", { ascending: false })
   return (data as Contract[]) ?? []
+}
+
+export async function getProducts(): Promise<Product[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from("products")
+    .select("*")
+    .order("category", { ascending: true })
+  return (data as Product[]) ?? []
 }
 
 export type EnterpriseData = {
