@@ -11,6 +11,9 @@ import {
   ShieldCheck,
   Radar,
   Package,
+  Building2,
+  FileText,
+  Receipt,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
@@ -25,11 +28,15 @@ type NavItem = {
 
 const allNav: NavItem[] = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/accounts", label: "Accounts", icon: Building2 },
   { href: "/campaigns", label: "Campaigns", icon: Megaphone, roles: ["CEO", "Manager", "Marketing", "Analyst"] },
   { href: "/leads", label: "Leads", icon: Users, roles: ["CEO", "Manager", "Sales", "Marketing"] },
   { href: "/pipeline", label: "Pipeline", icon: TrendingUp, roles: ["CEO", "Manager", "Sales", "Analyst"] },
+  { href: "/quotations", label: "Quotations", icon: FileText, roles: ["CEO", "Manager", "Sales", "Accountant"] },
+  { href: "/invoices", label: "Invoices", icon: Receipt, roles: ["CEO", "Manager", "Accountant"] },
   { href: "/revenue", label: "Revenue & ROI", icon: Wallet, roles: ["CEO", "Manager", "Accountant", "Analyst"] },
   { href: "/products", label: "Products", icon: Package },
+  { href: "/assurance", label: "Assurance", icon: ShieldCheck, roles: ["CEO", "Manager", "Analyst"] },
 ]
 
 export function AppSidebar() {
@@ -68,7 +75,7 @@ export function AppSidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 px-3 py-4">
+      <nav className="flex-1 px-3 py-4 overflow-y-auto">
         <p className="px-3 pb-2 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/50">
           Operations
         </p>

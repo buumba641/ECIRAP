@@ -9,11 +9,15 @@ import { useState, useEffect } from "react"
 
 const nav = [
   { href: "/", label: "Dashboard" },
+  { href: "/accounts", label: "Accounts" },
   { href: "/campaigns", label: "Campaigns" },
   { href: "/leads", label: "Leads" },
   { href: "/pipeline", label: "Pipeline" },
+  { href: "/quotations", label: "Quotations" },
+  { href: "/invoices", label: "Invoices" },
   { href: "/revenue", label: "Revenue" },
   { href: "/products", label: "Products" },
+  { href: "/assurance", label: "Assurance" },
 ]
 
 type Profile = {
