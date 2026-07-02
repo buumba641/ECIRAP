@@ -4,6 +4,15 @@ import { NextResponse, type NextRequest } from "next/server"
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
+  // If Supabase env vars are missing, skip auth entirely
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    console.warn("[middleware] Supabase env vars not set — skipping auth")
+    return supabaseResponse
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -25,10 +34,21 @@ export async function middleware(request: NextRequest) {
     },
   )
 
-  // Refresh the session (important for token refresh)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // Refresh the session with a timeout to prevent hanging
+  let user = null
+  try {
+    const result = await Promise.race([
+      supabase.auth.getUser(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Auth timeout")), 5000),
+      ),
+    ])
+    user = result.data?.user ?? null
+  } catch (err) {
+    console.error("[middleware] Auth check failed:", err)
+    // On auth failure, let the request through (pages will render with empty data)
+    return supabaseResponse
+  }
 
   // If not logged in and not on auth pages, redirect to login
   const isAuthPage =

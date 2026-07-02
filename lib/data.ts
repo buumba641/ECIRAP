@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, safeQuery } from "@/lib/supabase/server"
 import type {
   Campaign, Lead, Opportunity, Contract, Product,
   Account, Contact, Quotation, Invoice, Service,
@@ -12,211 +12,186 @@ const WON_STAGE = "Closed Won"
 
 export async function getCampaigns(): Promise<Campaign[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("campaigns")
-    .select("*")
-    .order("created_at", { ascending: true })
-  return (data as Campaign[]) ?? []
+  const data = await safeQuery<Campaign[]>(() =>
+    supabase.from("campaigns").select("*").order("created_at", { ascending: true }),
+  )
+  return data ?? []
 }
 
 // ─── Leads ───────────────────────────────────────────────────
 
 export async function getLeads(): Promise<Lead[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("leads")
-    .select("*")
-    .order("created_at", { ascending: false })
-  return (data as Lead[]) ?? []
+  const data = await safeQuery<Lead[]>(() =>
+    supabase.from("leads").select("*").order("created_at", { ascending: false }),
+  )
+  return data ?? []
 }
 
 // ─── Opportunities ───────────────────────────────────────────
 
 export async function getOpportunities(): Promise<Opportunity[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("opportunities")
-    .select("*")
-    .order("value", { ascending: false })
-  return (data as Opportunity[]) ?? []
+  const data = await safeQuery<Opportunity[]>(() =>
+    supabase.from("opportunities").select("*").order("value", { ascending: false }),
+  )
+  return data ?? []
 }
 
 // ─── Contracts ───────────────────────────────────────────────
 
 export async function getContracts(): Promise<Contract[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("contracts")
-    .select("*")
-    .order("signed_date", { ascending: false })
-  return (data as Contract[]) ?? []
+  const data = await safeQuery<Contract[]>(() =>
+    supabase.from("contracts").select("*").order("signed_date", { ascending: false }),
+  )
+  return data ?? []
 }
 
 // ─── Products ────────────────────────────────────────────────
 
 export async function getProducts(): Promise<Product[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("products")
-    .select("*")
-    .order("category", { ascending: true })
-  return (data as Product[]) ?? []
+  const data = await safeQuery<Product[]>(() =>
+    supabase.from("products").select("*").order("category", { ascending: true }),
+  )
+  return data ?? []
 }
 
 // ─── Accounts ────────────────────────────────────────────────
 
 export async function getAccounts(): Promise<Account[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("accounts")
-    .select("*")
-    .order("name", { ascending: true })
-  return (data as Account[]) ?? []
+  const data = await safeQuery<Account[]>(() =>
+    supabase.from("accounts").select("*").order("name", { ascending: true }),
+  )
+  return data ?? []
 }
 
 export async function getAccountById(id: string): Promise<Account | null> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("accounts")
-    .select("*")
-    .eq("id", id)
-    .single()
-  return (data as Account) ?? null
+  const data = await safeQuery<Account>(() =>
+    supabase.from("accounts").select("*").eq("id", id).single(),
+  )
+  return data ?? null
 }
 
 // ─── Contacts ────────────────────────────────────────────────
 
 export async function getContacts(): Promise<Contact[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("contacts")
-    .select("*")
-    .order("created_at", { ascending: false })
-  return (data as Contact[]) ?? []
+  const data = await safeQuery<Contact[]>(() =>
+    supabase.from("contacts").select("*").order("created_at", { ascending: false }),
+  )
+  return data ?? []
 }
 
 export async function getContactsByAccount(accountId: string): Promise<Contact[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("contacts")
-    .select("*")
-    .eq("account_id", accountId)
-    .order("is_primary", { ascending: false })
-  return (data as Contact[]) ?? []
+  const data = await safeQuery<Contact[]>(() =>
+    supabase.from("contacts").select("*").eq("account_id", accountId).order("is_primary", { ascending: false }),
+  )
+  return data ?? []
 }
 
 // ─── Quotations ──────────────────────────────────────────────
 
 export async function getQuotations(): Promise<Quotation[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("quotations")
-    .select("*")
-    .order("created_at", { ascending: false })
-  return (data as Quotation[]) ?? []
+  const data = await safeQuery<Quotation[]>(() =>
+    supabase.from("quotations").select("*").order("created_at", { ascending: false }),
+  )
+  return data ?? []
 }
 
 export async function getQuotationsByAccount(accountId: string): Promise<Quotation[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("quotations")
-    .select("*")
-    .eq("account_id", accountId)
-    .order("created_at", { ascending: false })
-  return (data as Quotation[]) ?? []
+  const data = await safeQuery<Quotation[]>(() =>
+    supabase.from("quotations").select("*").eq("account_id", accountId).order("created_at", { ascending: false }),
+  )
+  return data ?? []
 }
 
 // ─── Invoices ────────────────────────────────────────────────
 
 export async function getInvoices(): Promise<Invoice[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("invoices")
-    .select("*")
-    .order("created_at", { ascending: false })
-  return (data as Invoice[]) ?? []
+  const data = await safeQuery<Invoice[]>(() =>
+    supabase.from("invoices").select("*").order("created_at", { ascending: false }),
+  )
+  return data ?? []
 }
 
 export async function getInvoicesByAccount(accountId: string): Promise<Invoice[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("invoices")
-    .select("*")
-    .eq("account_id", accountId)
-    .order("created_at", { ascending: false })
-  return (data as Invoice[]) ?? []
+  const data = await safeQuery<Invoice[]>(() =>
+    supabase.from("invoices").select("*").eq("account_id", accountId).order("created_at", { ascending: false }),
+  )
+  return data ?? []
 }
 
 // ─── Services ────────────────────────────────────────────────
 
 export async function getServices(): Promise<Service[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("services")
-    .select("*")
-    .order("category", { ascending: true })
-  return (data as Service[]) ?? []
+  const data = await safeQuery<Service[]>(() =>
+    supabase.from("services").select("*").order("category", { ascending: true }),
+  )
+  return data ?? []
 }
 
 // ─── Activities ──────────────────────────────────────────────
 
 export async function getActivities(): Promise<Activity[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("activities")
-    .select("*")
-    .order("created_at", { ascending: false })
-  return (data as Activity[]) ?? []
+  const data = await safeQuery<Activity[]>(() =>
+    supabase.from("activities").select("*").order("created_at", { ascending: false }),
+  )
+  return data ?? []
 }
 
 export async function getActivitiesByAccount(accountId: string): Promise<Activity[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("activities")
-    .select("*")
-    .eq("account_id", accountId)
-    .order("created_at", { ascending: false })
-  return (data as Activity[]) ?? []
+  const data = await safeQuery<Activity[]>(() =>
+    supabase.from("activities").select("*").eq("account_id", accountId).order("created_at", { ascending: false }),
+  )
+  return data ?? []
 }
 
 // ─── Revenue Alerts ──────────────────────────────────────────
 
 export async function getRevenueAlerts(): Promise<RevenueAlert[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("revenue_alerts")
-    .select("*")
-    .order("created_at", { ascending: false })
-  return (data as RevenueAlert[]) ?? []
+  const data = await safeQuery<RevenueAlert[]>(() =>
+    supabase.from("revenue_alerts").select("*").order("created_at", { ascending: false }),
+  )
+  return data ?? []
 }
 
 // ─── Reference Data ──────────────────────────────────────────
 
 export async function getIndustries(): Promise<Industry[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("industries")
-    .select("*")
-    .order("name", { ascending: true })
-  return (data as Industry[]) ?? []
+  const data = await safeQuery<Industry[]>(() =>
+    supabase.from("industries").select("*").order("name", { ascending: true }),
+  )
+  return data ?? []
 }
 
 export async function getBranches(): Promise<Branch[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("branches")
-    .select("*")
-    .order("name", { ascending: true })
-  return (data as Branch[]) ?? []
+  const data = await safeQuery<Branch[]>(() =>
+    supabase.from("branches").select("*").order("name", { ascending: true }),
+  )
+  return data ?? []
 }
 
 export async function getProfiles(): Promise<Profile[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("profiles")
-    .select("*")
-    .order("full_name", { ascending: true })
-  return (data as Profile[]) ?? []
+  const data = await safeQuery<Profile[]>(() =>
+    supabase.from("profiles").select("*").order("full_name", { ascending: true }),
+  )
+  return data ?? []
 }
 
 // ─── Composite Data Fetchers ─────────────────────────────────
@@ -282,22 +257,18 @@ export async function getAccountData(accountId: string) {
 
 async function getOpportunitiesByAccount(accountId: string): Promise<Opportunity[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("opportunities")
-    .select("*")
-    .eq("account_id", accountId)
-    .order("value", { ascending: false })
-  return (data as Opportunity[]) ?? []
+  const data = await safeQuery<Opportunity[]>(() =>
+    supabase.from("opportunities").select("*").eq("account_id", accountId).order("value", { ascending: false }),
+  )
+  return data ?? []
 }
 
 async function getContractsByAccount(accountId: string): Promise<Contract[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("contracts")
-    .select("*")
-    .eq("account_id", accountId)
-    .order("signed_date", { ascending: false })
-  return (data as Contract[]) ?? []
+  const data = await safeQuery<Contract[]>(() =>
+    supabase.from("contracts").select("*").eq("account_id", accountId).order("signed_date", { ascending: false }),
+  )
+  return data ?? []
 }
 
 /* ---------- Derived metrics ---------- */

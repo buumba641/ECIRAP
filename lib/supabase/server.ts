@@ -25,3 +25,26 @@ export async function createClient() {
     },
   )
 }
+
+/** Run a Supabase query with a timeout. Returns data or null on any failure. */
+export async function safeQuery<T>(
+  queryFn: () => Promise<{ data: T | null; error: unknown }>,
+  timeoutMs = 8000,
+): Promise<T | null> {
+  try {
+    const result = await Promise.race([
+      queryFn(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Supabase query timeout")), timeoutMs),
+      ),
+    ])
+    if (result.error) {
+      console.error("[safeQuery] Supabase error:", result.error)
+      return null
+    }
+    return result.data
+  } catch (err) {
+    console.error("[safeQuery] Query failed:", err)
+    return null
+  }
+}
