@@ -14,6 +14,7 @@ import {
   Building2,
   FileText,
   Receipt,
+  UserCog,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
@@ -37,6 +38,7 @@ const allNav: NavItem[] = [
   { href: "/revenue", label: "Revenue & ROI", icon: Wallet, roles: ["CEO", "Manager", "Accountant", "Analyst"] },
   { href: "/products", label: "Products", icon: Package },
   { href: "/assurance", label: "Assurance", icon: ShieldCheck, roles: ["CEO", "Manager", "Analyst"] },
+  { href: "/admin/users", label: "User Management", icon: UserCog, roles: ["HR", "CEO"] },
 ]
 
 export function AppSidebar() {

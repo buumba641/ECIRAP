@@ -1,56 +1,88 @@
-import postgres from 'postgres';
-import crypto from 'crypto';
+import { createClient } from '@supabase/supabase-js';
 
-const sql = postgres('postgresql://postgres.gdexsxevehjmhcurhlrz:1234%40Infratel@aws-0-eu-west-1.pooler.supabase.com:5432/postgres');
+// Uses the Supabase Admin API (service_role key) to properly create users.
+// This ensures passwords are hashed correctly and users can actually log in.
+//
+// Usage:
+//   SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/create-users.mjs
+//
+// Or set it in .env.local and load it manually.
 
-const roles = ['ceo', 'manager', 'hr', 'analyst', 'marketing', 'cashier', 'sales', 'accountant'];
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gdexsxevehjmhcurhlrz.supabase.co';
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!SERVICE_ROLE_KEY) {
+  console.error('ERROR: SUPABASE_SERVICE_ROLE_KEY is required.');
+  console.error('Get it from: Supabase Dashboard → Settings → API → service_role (secret)');
+  console.error('Run: SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/create-users.mjs');
+  process.exit(1);
+}
+
+const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
+
+const employees = [
+  { email: 'ceo@ecirap.com',        fullName: 'Mulenga Kapwepwe',  role: 'CEO',        branch: 'Lusaka HQ' },
+  { email: 'manager@ecirap.com',     fullName: 'Chilufya Mwamba',   role: 'Manager',    branch: 'Lusaka HQ' },
+  { email: 'hr@ecirap.com',          fullName: 'Namwinga Bwalya',   role: 'HR',         branch: 'Lusaka HQ' },
+  { email: 'analyst@ecirap.com',     fullName: 'Kondwani Phiri',    role: 'Analyst',    branch: 'Lusaka HQ' },
+  { email: 'marketing@ecirap.com',   fullName: 'Mutale Chanda',     role: 'Marketing',  branch: 'Lusaka HQ' },
+  { email: 'cashier@ecirap.com',     fullName: 'Bupe Lungu',        role: 'Cashier',    branch: 'Lusaka HQ' },
+  { email: 'sales@ecirap.com',       fullName: 'Dalitso Banda',     role: 'Sales',      branch: 'Lusaka HQ' },
+  { email: 'accountant@ecirap.com',  fullName: 'Chisomo Tembo',     role: 'Accountant', branch: 'Lusaka HQ' },
+];
+
 const password = '1234';
 
 async function main() {
-  await sql`DELETE FROM auth.users WHERE email LIKE '%@ecirap.com'`;
+  console.log('Creating ECIRAP employee accounts via Supabase Admin API...\n');
 
-  for (const role of roles) {
-    const email = `${role}@ecirap.com`;
-    const id = crypto.randomUUID();
-    
-    console.log(`Inserting ${email}...`);
-    try {
-      await sql`
-        INSERT INTO auth.users (
-          id, instance_id, aud, role, email, encrypted_password, 
-          email_confirmed_at, recovery_sent_at, last_sign_in_at, 
-          raw_app_meta_data, raw_user_meta_data, is_super_admin, 
-          created_at, updated_at, phone, phone_confirmed_at, 
-          confirmation_token, email_change, email_change_token_new, 
-          email_change_confirm_status, banned_until, reauthentication_token, 
-          reauthentication_sent_at, is_sso_user, deleted_at, is_anonymous
-        ) VALUES (
-          ${id}, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', ${email}, crypt(${password}, gen_salt('bf')),
-          now(), NULL, NULL,
-          '{"provider":"email","providers":["email"]}', '{}', false,
-          now(), now(), NULL, NULL,
-          '', '', '', 
-          0, NULL, '', 
-          NULL, false, NULL, false
-        )
-      `;
-      
-      const roleCapitalized = role.charAt(0).toUpperCase() + role.slice(1);
-      const fullName = `Buumba (${roleCapitalized})`;
-      
-      await sql`
-        UPDATE profiles 
-        SET full_name = ${fullName}, role = ${roleCapitalized}, branch = 'Lusaka HQ' 
-        WHERE id = (SELECT id FROM auth.users WHERE email = ${email})
-      `;
-      console.log(`Successfully created and updated ${email}`);
-    } catch (e) {
-      console.error(`Error with ${email}:`, e);
+  // First, delete existing @ecirap.com users
+  const { data: existingUsers } = await supabase.auth.admin.listUsers({ perPage: 100 });
+  if (existingUsers?.users) {
+    for (const user of existingUsers.users) {
+      if (user.email?.endsWith('@ecirap.com')) {
+        console.log(`Deleting existing user: ${user.email}`);
+        await supabase.auth.admin.deleteUser(user.id);
+      }
     }
   }
-  
-  console.log("Done!");
-  process.exit(0);
+
+  // Create each employee
+  for (const emp of employees) {
+    console.log(`Creating ${emp.email} (${emp.role})...`);
+    
+    const { data, error } = await supabase.auth.admin.createUser({
+      email: emp.email,
+      password: password,
+      email_confirm: true, // Skip email verification
+      user_metadata: {
+        full_name: emp.fullName,
+        role: emp.role,
+      },
+    });
+
+    if (error) {
+      console.error(`  ✗ Failed: ${error.message}`);
+      continue;
+    }
+
+    // Update the profile with branch info (trigger creates the profile)
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ branch: emp.branch })
+      .eq('id', data.user.id);
+
+    if (profileError) {
+      console.error(`  ⚠ Profile update failed: ${profileError.message}`);
+    }
+
+    console.log(`  ✓ Created ${emp.email} → ${emp.role}`);
+  }
+
+  console.log('\n✅ All accounts created! Password for all: "1234"');
+  console.log('Users can now log in at /login');
 }
 
-main();
+main().catch(console.error);

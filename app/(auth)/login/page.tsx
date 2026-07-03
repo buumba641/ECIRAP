@@ -1,9 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Radar, LogIn } from "lucide-react"
+import { Radar, LogIn, ShieldAlert } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -44,7 +43,7 @@ export default function LoginPage() {
         </div>
         <h1 className="text-2xl font-bold tracking-tight">Welcome to ECIRAP</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Enterprise Commercial Intelligence & Revenue Assurance
+          Enterprise Commercial Intelligence &amp; Revenue Assurance
         </p>
       </div>
 
@@ -96,11 +95,12 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-4 text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
-          <Link href="/signup" className="font-medium text-primary hover:underline">
-            Create account
-          </Link>
+        <div className="mt-4 flex items-start gap-2 rounded-md bg-accent/50 p-3">
+          <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          <p className="text-xs text-muted-foreground">
+            This is a restricted B2B platform. Contact your HR administrator
+            for account access.
+          </p>
         </div>
       </div>
 

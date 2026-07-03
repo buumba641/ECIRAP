@@ -2,22 +2,34 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Building2, Moon, Sun, Menu, X, LogOut } from "lucide-react"
+import {
+  Building2, Moon, Sun, Menu, X, LogOut,
+  LayoutDashboard, Megaphone, Users, TrendingUp,
+  Wallet, ShieldCheck, Package, FileText, Receipt, UserCog,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
 
-const nav = [
-  { href: "/", label: "Dashboard" },
-  { href: "/accounts", label: "Accounts" },
-  { href: "/campaigns", label: "Campaigns" },
-  { href: "/leads", label: "Leads" },
-  { href: "/pipeline", label: "Pipeline" },
-  { href: "/quotations", label: "Quotations" },
-  { href: "/invoices", label: "Invoices" },
-  { href: "/revenue", label: "Revenue" },
-  { href: "/products", label: "Products" },
-  { href: "/assurance", label: "Assurance" },
+type NavItem = {
+  href: string
+  label: string
+  icon: typeof LayoutDashboard
+  roles?: string[] // if undefined, visible to all roles
+}
+
+const allNav: NavItem[] = [
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/accounts", label: "Accounts", icon: Building2 },
+  { href: "/campaigns", label: "Campaigns", icon: Megaphone, roles: ["CEO", "Manager", "Marketing", "Analyst"] },
+  { href: "/leads", label: "Leads", icon: Users, roles: ["CEO", "Manager", "Sales", "Marketing"] },
+  { href: "/pipeline", label: "Pipeline", icon: TrendingUp, roles: ["CEO", "Manager", "Sales", "Analyst"] },
+  { href: "/quotations", label: "Quotations", icon: FileText, roles: ["CEO", "Manager", "Sales", "Accountant"] },
+  { href: "/invoices", label: "Invoices", icon: Receipt, roles: ["CEO", "Manager", "Accountant"] },
+  { href: "/revenue", label: "Revenue", icon: Wallet, roles: ["CEO", "Manager", "Accountant", "Analyst"] },
+  { href: "/products", label: "Products", icon: Package },
+  { href: "/assurance", label: "Assurance", icon: ShieldCheck, roles: ["CEO", "Manager", "Analyst"] },
+  { href: "/admin/users", label: "Users", icon: UserCog, roles: ["HR", "CEO"] },
 ]
 
 type Profile = {
@@ -46,6 +58,11 @@ export function TopBar() {
       if (data) setProfile(data)
     })
   }, [])
+
+  // Filter nav based on user role
+  const nav = allNav.filter(
+    (item) => !item.roles || !profile?.role || item.roles.includes(profile.role),
+  )
 
   function toggleDark() {
     const next = !dark
@@ -90,18 +107,20 @@ export function TopBar() {
             {nav.map((item) => {
               const active =
                 item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)
+              const Icon = item.icon
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setMenuOpen(false)}
                   className={cn(
-                    "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                     active
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-accent",
                   )}
                 >
+                  <Icon className="h-4 w-4" />
                   {item.label}
                 </Link>
               )

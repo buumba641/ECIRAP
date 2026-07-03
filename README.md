@@ -1,33 +1,43 @@
 # ECIRAP — Enterprise Commercial Intelligence & Revenue Assurance Platform
 
-ECIRAP is a comprehensive B2B CRM and Revenue Assurance platform built for Infratel Zambia. It provides 360° visibility into strategic accounts, pipeline management, and proactive detection of revenue leakage.
+ECIRAP is a comprehensive B2B CRM and Revenue Assurance platform built for Infratel Zambia. It provides 360° visibility into strategic accounts, pipeline management, proactive detection of revenue leakage, and robust Role-Based Access Control (RBAC).
 
 ## Live Demo
 
 Access the live application at: [https://ecirap.vercel.app/](https://ecirap.vercel.app/)
 
 ### Demo Login Credentials
-Use the following credentials to access the pre-populated dashboard. Each account provides access to different role-based views and features:
 
-| Role | Email | Password |
-| :--- | :--- | :--- |
-| **CEO** | `ceo@ecirap.com` | `1234` |
-| **Manager** | `manager@ecirap.com` | `1234` |
-| **HR** | `hr@ecirap.com` | `1234` |
-| **Analyst** | `analyst@ecirap.com` | `1234` |
-| **Marketing** | `marketing@ecirap.com` | `1234` |
-| **Cashier** | `cashier@ecirap.com` | `1234` |
-| **Sales** | `sales@ecirap.com` | `1234` |
-| **Accountant** | `accountant@ecirap.com` | `1234` |
+This is a restricted B2B platform. Public signup is disabled. Use the following credentials to access the platform. Each account provides access to different role-based views and features:
+
+| Role | Email | Password | Allowed Access |
+| :--- | :--- | :--- | :--- |
+| **CEO** | `ceo@ecirap.com` | `1234` | Full access to all modules, including User Management. |
+| **Manager** | `manager@ecirap.com` | `1234` | All business modules, except User Management. |
+| **HR** | `hr@ecirap.com` | `1234` | Dashboard, Accounts, Products, User Management. |
+| **Analyst** | `analyst@ecirap.com` | `1234` | Campaigns, Pipeline, Revenue, Assurance. |
+| **Marketing** | `marketing@ecirap.com` | `1234` | Campaigns, Leads. |
+| **Sales** | `sales@ecirap.com` | `1234` | Leads, Pipeline, Quotations. |
+| **Accountant** | `accountant@ecirap.com` | `1234` | Quotations, Invoices, Revenue. |
+| **Cashier** | `cashier@ecirap.com` | `1234` | (Limited to generic routes by default) |
 
 *(Note: These credentials require the database to be seeded and users created first, see instructions below)*
 
 ## Tech Stack
 
 - **Framework:** Next.js 15 (App Router)
-- **Database & Auth:** Supabase
-- **Styling:** Tailwind CSS + Shadcn UI
+- **Database & Auth:** Supabase (PostgreSQL, Supabase Auth)
+- **Styling:** Tailwind CSS + UI Components
 - **Charts:** Recharts
+- **Icons:** Lucide React
+
+## Core Features
+
+- **Strategic Account Management:** 360° view of Platinum, Gold, Silver, and Bronze accounts with health scores, contacts, and activity tracking.
+- **Pipeline & Opportunities:** Manage sales stages, expected revenue, and quotations.
+- **Revenue Assurance:** Automated alerts for expiring contracts, stalled opportunities, unassigned leads, and overdue invoices to prevent revenue leakage.
+- **Strict Role-Based Access Control (RBAC):** Route-level protection via Next.js Middleware. Users are restricted to modules relevant to their job function.
+- **HR Admin Panel:** Dedicated UI for HR and CEO to provision, update, and revoke employee access.
 
 ## Setup Instructions
 
@@ -36,28 +46,11 @@ Use the following credentials to access the pre-populated dashboard. Each accoun
 You need to run the SQL scripts in the Supabase SQL Editor in the following order:
 
 1. `scripts/setup-tables.sql` (Base tables)
-2. `scripts/setup-auth.sql` (Auth triggers)
-3. `scripts/setup-full-schema.sql` (Extended CRM schema)
+2. `scripts/setup-auth.sql` (Auth triggers & Profiles table)
+3. `scripts/setup-full-schema.sql` (Extended CRM schema for accounts, invoices, etc.)
 4. `scripts/seed-data.sql` (Mock data for the demo)
 
-**Important:** After running the scripts, you must manually create the demo users in the Supabase Dashboard (Auth > Users). 
-
-For each role (ceo, manager, hr, analyst, marketing, cashier, sales, accountant):
-- Email: `[role]@ecirap.com` (e.g., `ceo@ecirap.com`)
-- Password: `1234`
-- Check "Auto-confirm user"
-
-Then, run this SQL command in the Supabase SQL Editor to correctly assign their roles and names:
-```sql
-UPDATE profiles SET full_name = 'Buumba (CEO)', role = 'CEO', branch = 'Lusaka HQ' WHERE id = (SELECT id FROM auth.users WHERE email = 'ceo@ecirap.com');
-UPDATE profiles SET full_name = 'Buumba (Manager)', role = 'Manager', branch = 'Lusaka HQ' WHERE id = (SELECT id FROM auth.users WHERE email = 'manager@ecirap.com');
-UPDATE profiles SET full_name = 'Buumba (HR)', role = 'HR', branch = 'Lusaka HQ' WHERE id = (SELECT id FROM auth.users WHERE email = 'hr@ecirap.com');
-UPDATE profiles SET full_name = 'Buumba (Analyst)', role = 'Analyst', branch = 'Lusaka HQ' WHERE id = (SELECT id FROM auth.users WHERE email = 'analyst@ecirap.com');
-UPDATE profiles SET full_name = 'Buumba (Marketing)', role = 'Marketing', branch = 'Lusaka HQ' WHERE id = (SELECT id FROM auth.users WHERE email = 'marketing@ecirap.com');
-UPDATE profiles SET full_name = 'Buumba (Cashier)', role = 'Cashier', branch = 'Lusaka HQ' WHERE id = (SELECT id FROM auth.users WHERE email = 'cashier@ecirap.com');
-UPDATE profiles SET full_name = 'Buumba (Sales)', role = 'Sales', branch = 'Lusaka HQ' WHERE id = (SELECT id FROM auth.users WHERE email = 'sales@ecirap.com');
-UPDATE profiles SET full_name = 'Buumba (Accountant)', role = 'Accountant', branch = 'Lusaka HQ' WHERE id = (SELECT id FROM auth.users WHERE email = 'accountant@ecirap.com');
-```
+*Alternatively, you can run `node scripts/run-sql.mjs` if you have configured the DB connection string in the script.*
 
 ### 2. Local Environment Setup
 
@@ -65,19 +58,30 @@ UPDATE profiles SET full_name = 'Buumba (Accountant)', role = 'Accountant', bran
    ```bash
    npm install
    ```
-2. Create a `.env.local` file in the root directory with your Supabase credentials:
+
+2. Create a `.env.local` file in the root directory with your Supabase credentials. **You must include the Service Role Key** to enable user creation via the Admin API:
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
    ```
-3. Run the development server:
-   ```bash
-   npm run dev
-   ```
+   *(Get these from your Supabase Dashboard → Settings → API)*
 
-## Features
+### 3. Create Demo Users
 
-- **Strategic Account Management:** Track Platinum, Gold, Silver, and Bronze accounts with health scores.
-- **Pipeline & Opportunities:** Manage sales stages and expected revenue.
-- **Revenue Assurance:** AI-driven alerts for expiring contracts, stalled opportunities, unassigned leads, and overdue invoices.
-- **Role-Based Access Control (RBAC):** Customized navigation based on user roles (CEO, Sales, Marketing, Accountant, etc.).
+Because this app uses Supabase Auth properly with secure password hashing, you cannot simply insert users into the `auth.users` table with raw SQL.
+
+Run the user creation script which uses the Supabase Admin API:
+```bash
+node scripts/create-users.mjs
+```
+This script will provision the 8 role-based employee accounts listed in the credentials table above, setting their initial password to `1234`.
+
+### 4. Run the Application
+
+Start the development server:
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result. You will be redirected to the login page.
