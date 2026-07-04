@@ -1,41 +1,11 @@
 "use server"
 
-import { createClient as createServerClient } from "@/lib/supabase/server"
-import { createClient } from "@supabase/supabase-js"
+import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { verifyAdminAccess } from "@/lib/auth"
+import bcrypt from "bcryptjs"
 
 const VALID_ROLES = ["CEO", "Manager", "HR", "Analyst", "Marketing", "Cashier", "Sales", "Accountant"] as const
-
-/** Get an admin Supabase client using the service_role key (server-only). */
-function createAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !serviceKey) {
-    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY — required for admin operations")
-  }
-  return createClient(url, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
-}
-
-/** Verify the current user is HR or CEO before admin operations */
-async function verifyAdminAccess() {
-  const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Not authenticated")
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single()
-
-  if (!profile || !["HR", "CEO"].includes(profile.role)) {
-    throw new Error("Unauthorized — only HR and CEO can manage employees")
-  }
-
-  return user
-}
 
 /** Create a new employee account. */
 export async function createEmployee(formData: FormData) {
@@ -64,26 +34,26 @@ export async function createEmployee(formData: FormData) {
   }
 
   try {
-    const admin = createAdminClient()
+    const supabase = await createClient()
 
-    const { data, error } = await admin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
+    // Hash the password
+    const password_hash = await bcrypt.hash(password, 10)
+
+    const { error } = await supabase
+      .from("employees")
+      .insert({
+        email: email.toLowerCase().trim(),
+        password_hash,
         full_name: fullName,
         role,
-      },
-    })
+        branch,
+      })
 
-    if (error) return { error: error.message }
-
-    // Update profile with branch (trigger creates the profile row)
-    if (data.user) {
-      await admin
-        .from("profiles")
-        .update({ branch })
-        .eq("id", data.user.id)
+    if (error) {
+      if (error.code === '23505') { // unique violation
+        return { error: "An employee with this email already exists" }
+      }
+      return { error: error.message }
     }
 
     revalidatePath("/admin/users")
@@ -106,20 +76,14 @@ export async function updateEmployeeRole(userId: string, newRole: string) {
   }
 
   try {
-    const admin = createAdminClient()
+    const supabase = await createClient()
 
-    // Update the profile role
-    const { error } = await admin
-      .from("profiles")
+    const { error } = await supabase
+      .from("employees")
       .update({ role: newRole, updated_at: new Date().toISOString() })
       .eq("id", userId)
 
     if (error) return { error: error.message }
-
-    // Also update user_metadata so it stays in sync
-    await admin.auth.admin.updateUserById(userId, {
-      user_metadata: { role: newRole },
-    })
 
     revalidatePath("/admin/users")
     return { success: true }
@@ -128,7 +92,7 @@ export async function updateEmployeeRole(userId: string, newRole: string) {
   }
 }
 
-/** Delete an employee account entirely. */
+/** Delete an employee account entirely (soft delete or hard delete). */
 export async function deleteEmployee(userId: string) {
   try {
     await verifyAdminAccess()
@@ -137,10 +101,10 @@ export async function deleteEmployee(userId: string) {
   }
 
   try {
-    const admin = createAdminClient()
+    const supabase = await createClient()
 
-    // Delete from Supabase Auth (cascade will delete profile)
-    const { error } = await admin.auth.admin.deleteUser(userId)
+    // We can do a hard delete for simplicity here, or soft delete:
+    const { error } = await supabase.from("employees").delete().eq("id", userId)
     if (error) return { error: error.message }
 
     revalidatePath("/admin/users")
@@ -150,7 +114,7 @@ export async function deleteEmployee(userId: string) {
   }
 }
 
-/** Get all employees with their profile data and auth email. */
+/** Get all employees. */
 export async function getEmployees() {
   try {
     await verifyAdminAccess()
@@ -159,28 +123,18 @@ export async function getEmployees() {
   }
 
   try {
-    const admin = createAdminClient()
+    const supabase = await createClient()
 
-    // Get all users from Auth
-    const { data: authData } = await admin.auth.admin.listUsers({ perPage: 100 })
-    const users = authData?.users ?? []
-
-    // Get all profiles
-    const supabase = await createServerClient()
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("*")
+    const { data: employees } = await supabase
+      .from("employees")
+      .select("id, email, full_name, role, branch, avatar_url, is_active, created_at, updated_at")
       .order("full_name", { ascending: true })
 
-    // Merge auth + profile data
-    return (profiles ?? []).map((profile) => {
-      const authUser = users.find((u) => u.id === profile.id)
-      return {
-        ...profile,
-        email: authUser?.email ?? "Unknown",
-        last_sign_in_at: authUser?.last_sign_in_at ?? null,
-      }
-    })
+    // Provide last_sign_in_at as null for compatibility with previous view
+    return (employees ?? []).map((emp) => ({
+      ...emp,
+      last_sign_in_at: null,
+    }))
   } catch (err) {
     console.error("[getEmployees] Error:", err)
     return []

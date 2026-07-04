@@ -46,16 +46,14 @@ export function AppSidebar() {
   const [userRole, setUserRole] = useState<string | null>(null)
 
   useEffect(() => {
+    // Fetch current employee's role from the employees table
     const supabase = createClient()
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) return
-      const { data } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single()
-      if (data) setUserRole(data.role)
-    })
+    fetch("/api/me")
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.role) setUserRole(data.role)
+      })
+      .catch(() => {})
   }, [])
 
   // Filter nav items based on role

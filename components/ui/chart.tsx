@@ -2,8 +2,6 @@
 
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
-import type { TooltipValueType } from "recharts"
-
 import { cn } from "@/lib/utils"
 
 // Format: { THEME_NAME: CSS_SELECTOR }
@@ -139,8 +137,8 @@ function ChartTooltipContent({
     labelKey?: string
   } & Omit<
     RechartsPrimitive.DefaultTooltipContentProps<
-      TooltipValueType,
-      TooltipNameType
+      any,
+      any
     >,
     "accessibilityLayer"
   >) {

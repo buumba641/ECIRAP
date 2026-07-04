@@ -3,9 +3,9 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Radar, LogIn, ShieldAlert } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { login } from "@/lib/auth"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -19,14 +19,10 @@ export default function LoginPage() {
     setError(null)
     setLoading(true)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const result = await login(email, password)
 
-    if (error) {
-      setError(error.message)
+    if (!result.success) {
+      setError(result.error ?? "Login failed")
       setLoading(false)
       return
     }

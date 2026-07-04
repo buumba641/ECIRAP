@@ -26,7 +26,7 @@ This is a restricted B2B platform. Public signup is disabled. Use the following 
 ## Tech Stack
 
 - **Framework:** Next.js 15 (App Router)
-- **Database & Auth:** Supabase (PostgreSQL, Supabase Auth)
+- **Database & Auth:** Supabase (PostgreSQL, employee auth table with Supabase Auth fallback)
 - **Styling:** Tailwind CSS + UI Components
 - **Charts:** Recharts
 - **Icons:** Lucide React
@@ -71,7 +71,7 @@ You need to run the SQL scripts in the Supabase SQL Editor in the following orde
 
 Because this app uses Supabase Auth properly with secure password hashing, you cannot simply insert users into the `auth.users` table with raw SQL.
 
-Run the user creation script which uses the Supabase Admin API:
+Run the user creation script which uses the Supabase Admin API and provisions the Supabase Auth demo users:
 ```bash
 node scripts/create-users.mjs
 ```

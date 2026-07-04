@@ -8,8 +8,8 @@ import {
   Wallet, ShieldCheck, Package, FileText, Receipt, UserCog,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
+import { logout } from "@/lib/auth"
 
 type NavItem = {
   href: string
@@ -32,7 +32,7 @@ const allNav: NavItem[] = [
   { href: "/admin/users", label: "Users", icon: UserCog, roles: ["HR", "CEO"] },
 ]
 
-type Profile = {
+type EmployeeInfo = {
   full_name: string
   role: string
 }
@@ -42,21 +42,18 @@ export function TopBar() {
   const router = useRouter()
   const [dark, setDark] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [profile, setProfile] = useState<Profile | null>(null)
+  const [profile, setProfile] = useState<EmployeeInfo | null>(null)
 
   useEffect(() => {
     setDark(document.documentElement.classList.contains("dark"))
 
-    const supabase = createClient()
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) return
-      const { data } = await supabase
-        .from("profiles")
-        .select("full_name, role")
-        .eq("id", user.id)
-        .single()
-      if (data) setProfile(data)
-    })
+    // Fetch current employee info from API
+    fetch("/api/me")
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data) setProfile({ full_name: data.full_name, role: data.role })
+      })
+      .catch(() => {})
   }, [])
 
   // Filter nav based on user role
@@ -72,8 +69,7 @@ export function TopBar() {
   }
 
   async function handleLogout() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
+    await logout()
     router.push("/login")
     router.refresh()
   }

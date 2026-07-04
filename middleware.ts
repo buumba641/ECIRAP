@@ -1,5 +1,34 @@
-import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
+import { SignJWT, jwtVerify } from "jose"
+
+// ─── Session Config ──────────────────────────────────────────────────────────
+const SESSION_COOKIE = "ecirap-session"
+
+function getSecret() {
+  const secret = process.env.SESSION_SECRET || "ecirap-default-dev-secret-change-me"
+  return new TextEncoder().encode(secret)
+}
+
+type SessionPayload = {
+  id: string
+  email: string
+  full_name: string
+  role: string
+  branch: string
+}
+
+async function getSessionFromRequest(
+  request: NextRequest,
+): Promise<SessionPayload | null> {
+  const token = request.cookies.get(SESSION_COOKIE)?.value
+  if (!token) return null
+  try {
+    const { payload } = await jwtVerify(token, getSecret())
+    return payload as unknown as SessionPayload
+  } catch {
+    return null
+  }
+}
 
 // ─── Role-Based Route Access Map ─────────────────────────────────────────────
 // Routes not listed here are accessible to ALL authenticated users.
@@ -25,108 +54,47 @@ function getRequiredRoles(pathname: string): string[] | null {
 }
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
-
-  // If Supabase env vars are missing, skip auth entirely
-  if (
-    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  ) {
-    console.warn("[middleware] Supabase env vars not set — skipping auth")
-    return supabaseResponse
-  }
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value),
-          )
-          supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
-          )
-        },
-      },
-    },
-  )
-
-  // Refresh the session with a timeout to prevent hanging
-  let user = null
-  try {
-    const result = await Promise.race([
-      supabase.auth.getUser(),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Auth timeout")), 5000),
-      ),
-    ])
-    user = result.data?.user ?? null
-  } catch (err) {
-    console.error("[middleware] Auth check failed:", err)
-    // On auth failure, let the request through (pages will render with empty data)
-    return supabaseResponse
-  }
+  const { pathname } = request.nextUrl
 
   // Redirect /signup to /login (signup is removed)
-  if (request.nextUrl.pathname.startsWith("/signup")) {
+  if (pathname.startsWith("/signup")) {
     const url = request.nextUrl.clone()
     url.pathname = "/login"
     return NextResponse.redirect(url)
   }
 
-  const isAuthPage = request.nextUrl.pathname.startsWith("/login")
+  const isAuthPage = pathname.startsWith("/login")
+
+  // Get session from JWT cookie
+  const session = await getSessionFromRequest(request)
 
   // If not logged in and not on the login page, redirect to login
-  if (!user && !isAuthPage) {
+  if (!session && !isAuthPage) {
     const url = request.nextUrl.clone()
     url.pathname = "/login"
     return NextResponse.redirect(url)
   }
 
   // If logged in and on the login page, redirect to dashboard
-  if (user && isAuthPage) {
+  if (session && isAuthPage) {
     const url = request.nextUrl.clone()
     url.pathname = "/"
     return NextResponse.redirect(url)
   }
 
   // ─── Role-Based Access Check ─────────────────────────────────────────────
-  if (user) {
-    const requiredRoles = getRequiredRoles(request.nextUrl.pathname)
+  if (session) {
+    const requiredRoles = getRequiredRoles(pathname)
 
-    if (requiredRoles) {
-      // Fetch user's role from profile
-      let userRole: string | null = null
-      try {
-        const { data } = await Promise.race([
-          supabase.from("profiles").select("role").eq("id", user.id).single(),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error("Profile query timeout")), 3000),
-          ),
-        ])
-        userRole = data?.role ?? null
-      } catch {
-        console.error("[middleware] Profile fetch failed, allowing access")
-        return supabaseResponse
-      }
-
-      // If we got a role and it's not in the allowed list, redirect to dashboard
-      if (userRole && !requiredRoles.includes(userRole)) {
-        const url = request.nextUrl.clone()
-        url.pathname = "/"
-        url.searchParams.set("unauthorized", "1")
-        return NextResponse.redirect(url)
-      }
+    if (requiredRoles && !requiredRoles.includes(session.role)) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/"
+      url.searchParams.set("unauthorized", "1")
+      return NextResponse.redirect(url)
     }
   }
 
-  return supabaseResponse
+  return NextResponse.next()
 }
 
 export const config = {

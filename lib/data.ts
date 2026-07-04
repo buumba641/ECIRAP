@@ -189,7 +189,7 @@ export async function getBranches(): Promise<Branch[]> {
 export async function getProfiles(): Promise<Profile[]> {
   const supabase = await createClient()
   const data = await safeQuery<Profile[]>(() =>
-    supabase.from("profiles").select("*").order("full_name", { ascending: true }),
+    supabase.from("employees").select("*").order("full_name", { ascending: true }),
   )
   return data ?? []
 }

@@ -51,13 +51,19 @@ export async function login(
   // during Server Action invocation
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const authKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || supabaseKey
 
-  if (!supabaseUrl || !supabaseKey) {
-    console.error("[login] Missing Supabase env vars:", { supabaseUrl: !!supabaseUrl, supabaseKey: !!supabaseKey })
+  if (!supabaseUrl || !supabaseKey || !authKey) {
+    console.error("[login] Missing Supabase env vars:", {
+      supabaseUrl: !!supabaseUrl,
+      supabaseKey: !!supabaseKey,
+      authKey: !!authKey,
+    })
     return { success: false, error: "Server configuration error. Contact HR." }
   }
 
   const supabase = createSupabaseClient(supabaseUrl, supabaseKey)
+  const authSupabase = createSupabaseClient(supabaseUrl, authKey)
   const normalizedEmail = email.toLowerCase().trim()
 
   console.log("[login] Attempting login for:", normalizedEmail)
@@ -71,38 +77,81 @@ export async function login(
 
   if (error) {
     console.error("[login] DB error fetching employee:", JSON.stringify(error))
-    return { success: false, error: "Invalid email or password" }
-  }
+  } else if (employee) {
+    console.log("[login] Employee found:", employee.email, "| active:", employee.is_active)
 
-  if (!employee) {
+    if (!employee.is_active) {
+      return { success: false, error: "Account has been deactivated. Contact HR." }
+    }
+
+    // Verify the password against the employee table first.
+    const valid = await bcrypt.compare(password, employee.password_hash)
+    console.log("[login] Employee password valid:", valid)
+
+    if (valid) {
+      const token = await createSession({
+        id: employee.id,
+        email: employee.email,
+        full_name: employee.full_name,
+        role: employee.role,
+        branch: employee.branch,
+      })
+
+      const cookieStore = await cookies()
+      cookieStore.set(SESSION_COOKIE, token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: SESSION_DURATION,
+        path: "/",
+      })
+
+      console.log("[login] Login successful for:", employee.email)
+      return { success: true }
+    }
+  } else {
     console.log("[login] No employee found for:", normalizedEmail)
-    return { success: false, error: "Invalid email or password" }
   }
 
-  console.log("[login] Employee found:", employee.email, "| active:", employee.is_active)
-
-  if (!employee.is_active) {
-    return { success: false, error: "Account has been deactivated. Contact HR." }
-  }
-
-  // Verify the password
-  const valid = await bcrypt.compare(password, employee.password_hash)
-  console.log("[login] Password valid:", valid)
-
-  if (!valid) {
-    return { success: false, error: "Invalid email or password" }
-  }
-
-  // Create JWT session
-  const token = await createSession({
-    id: employee.id,
-    email: employee.email,
-    full_name: employee.full_name,
-    role: employee.role,
-    branch: employee.branch,
+  // Fallback to Supabase Auth for deployments that use auth.users + profiles.
+  const { data: authData, error: authError } = await authSupabase.auth.signInWithPassword({
+    email: normalizedEmail,
+    password,
   })
 
-  // Set the session cookie
+  if (authError || !authData.user) {
+    console.error("[login] Supabase Auth login failed:", authError?.message ?? "No user returned")
+    return { success: false, error: "Invalid email or password" }
+  }
+
+  const { data: profile, error: profileError } = await authSupabase
+    .from("profiles")
+    .select("full_name, role, branch")
+    .eq("id", authData.user.id)
+    .single()
+
+  if (profileError) {
+    console.error("[login] Profile lookup failed:", JSON.stringify(profileError))
+  }
+
+  const token = await createSession({
+    id: authData.user.id,
+    email: authData.user.email ?? normalizedEmail,
+    full_name:
+      profile?.full_name ??
+      (authData.user.user_metadata?.full_name as string | undefined) ??
+      authData.user.email ??
+      normalizedEmail,
+    role:
+      profile?.role ??
+      (authData.user.user_metadata?.role as string | undefined) ??
+      "Sales",
+    branch:
+      profile?.branch ??
+      (authData.user.user_metadata?.branch as string | undefined) ??
+      "Lusaka HQ",
+  })
+
   const cookieStore = await cookies()
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
@@ -112,7 +161,7 @@ export async function login(
     path: "/",
   })
 
-  console.log("[login] Login successful for:", employee.email)
+  console.log("[login] Login successful via Supabase Auth for:", authData.user.email)
   return { success: true }
 }
 

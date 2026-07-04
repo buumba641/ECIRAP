@@ -28,12 +28,12 @@ export async function createClient() {
 
 /** Run a Supabase query with a timeout. Returns data or null on any failure. */
 export async function safeQuery<T>(
-  queryFn: () => Promise<{ data: T | null; error: unknown }>,
+  queryFn: () => PromiseLike<{ data: T | null; error: unknown }> | Promise<{ data: T | null; error: unknown }>,
   timeoutMs = 8000,
 ): Promise<T | null> {
   try {
     const result = await Promise.race([
-      queryFn(),
+      Promise.resolve(queryFn()),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("Supabase query timeout")), timeoutMs),
       ),

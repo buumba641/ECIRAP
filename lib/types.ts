@@ -210,12 +210,18 @@ export type RevenueAlert = {
   created_at: string
 }
 
-export type Profile = {
+export type Employee = {
   id: string
+  email: string
+  password_hash?: string
   full_name: string
   role: string
   branch: string | null
   avatar_url: string | null
+  is_active: boolean
   created_at: string
   updated_at: string
 }
+
+// Keep Profile as alias for backward compatibility
+export type Profile = Employee
