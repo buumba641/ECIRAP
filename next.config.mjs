@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
+import path from "path"
+
+const projectRoot = path.resolve()
+
 const nextConfig = {
+  outputFileTracingRoot: projectRoot,
   typescript: {
     ignoreBuildErrors: true,
   },
