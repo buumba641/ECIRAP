@@ -121,7 +121,11 @@ export async function login(
 
   if (authError || !authData.user) {
     console.error("[login] Supabase Auth login failed:", authError?.message ?? "No user returned")
-    return { success: false, error: "Invalid email or password" }
+    return {
+      success: false,
+      error:
+        "Login backend mismatch. Check the Supabase project/env vars and that demo users exist in the configured database.",
+    }
   }
 
   const { data: profile, error: profileError } = await authSupabase
