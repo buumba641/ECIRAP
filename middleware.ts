@@ -33,14 +33,26 @@ async function getSessionFromRequest(
 // ─── Role-Based Route Access Map ─────────────────────────────────────────────
 // Routes not listed here are accessible to ALL authenticated users.
 const ROUTE_ACCESS: Record<string, string[]> = {
-  "/campaigns":   ["CEO", "Manager", "Marketing", "Analyst"],
-  "/leads":       ["CEO", "Manager", "Sales", "Marketing"],
-  "/pipeline":    ["CEO", "Manager", "Sales", "Analyst"],
-  "/quotations":  ["CEO", "Manager", "Sales", "Accountant"],
-  "/invoices":    ["CEO", "Manager", "Accountant"],
-  "/revenue":     ["CEO", "Manager", "Accountant", "Analyst"],
-  "/assurance":   ["CEO", "Manager", "Analyst"],
-  "/admin":       ["HR", "CEO"],
+  // ── Existing routes (corrected) ──────────────────────────────
+  "/campaigns":         ["CEO", "Manager", "Marketing", "Analyst"],
+  "/leads":             ["CEO", "Manager", "Sales", "Marketing"],
+  "/pipeline":          ["CEO", "Manager", "Sales", "TeamLead", "Analyst"],
+  "/quotations":        ["CEO", "Manager", "Sales", "Accountant"],
+  "/invoices":          ["CEO", "Manager", "Sales", "Accountant", "Cashier"],
+  "/revenue":           ["CEO", "Manager", "Accountant", "Analyst", "Marketing"],
+  "/products":          ["CEO", "Manager", "Cashier", "Analyst"],
+  "/assurance":         ["CEO", "Manager", "Analyst"],
+  "/accounts":          ["CEO", "Manager"],
+  "/admin":             ["HR", "CEO"],
+  // ── New routes ───────────────────────────────────────────────
+  "/payment-approvals": ["CEO", "Manager"],
+  "/my-customers":      ["Sales"],
+  "/my-revenue":        ["Sales"],
+  "/team-performance":  ["TeamLead"],
+  "/payroll":           ["CEO", "Accountant"],
+  "/cash-handover":     ["CEO", "Accountant", "Cashier"],
+  "/system-health":     ["IT"],
+  "/change-requests":   ["IT", "CEO"],
 }
 
 function getRequiredRoles(pathname: string): string[] | null {

@@ -6,6 +6,7 @@ import {
   Building2, Moon, Sun, Menu, X, LogOut,
   LayoutDashboard, Megaphone, Users, TrendingUp,
   Wallet, ShieldCheck, Package, FileText, Receipt, UserCog,
+  Users2, BarChart2, CheckSquare, Banknote, Handshake, Activity, GitPullRequest,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
@@ -19,18 +20,33 @@ type NavItem = {
 }
 
 const allNav: NavItem[] = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/accounts", label: "Accounts", icon: Building2 },
-  { href: "/campaigns", label: "Campaigns", icon: Megaphone, roles: ["CEO", "Manager", "Marketing", "Analyst"] },
-  { href: "/leads", label: "Leads", icon: Users, roles: ["CEO", "Manager", "Sales", "Marketing"] },
-  { href: "/pipeline", label: "Pipeline", icon: TrendingUp, roles: ["CEO", "Manager", "Sales", "Analyst"] },
-  { href: "/quotations", label: "Quotations", icon: FileText, roles: ["CEO", "Manager", "Sales", "Accountant"] },
-  { href: "/invoices", label: "Invoices", icon: Receipt, roles: ["CEO", "Manager", "Accountant"] },
-  { href: "/revenue", label: "Revenue", icon: Wallet, roles: ["CEO", "Manager", "Accountant", "Analyst"] },
-  { href: "/products", label: "Products", icon: Package },
-  { href: "/assurance", label: "Assurance", icon: ShieldCheck, roles: ["CEO", "Manager", "Analyst"] },
-  { href: "/admin/users", label: "Users", icon: UserCog, roles: ["HR", "CEO"] },
+  // ── Shared / CEO / Manager ─────────────────────────────────
+  { href: "/",                  label: "Dashboard",           icon: LayoutDashboard,  roles: ["CEO", "Manager"] },
+  { href: "/accounts",          label: "Accounts",            icon: Building2,         roles: ["CEO", "Manager"] },
+  { href: "/campaigns",         label: "Campaigns",           icon: Megaphone,         roles: ["CEO", "Manager", "Marketing", "Analyst"] },
+  { href: "/leads",             label: "Leads",               icon: Users,             roles: ["CEO", "Manager", "Sales", "Marketing"] },
+  { href: "/pipeline",          label: "Pipeline",            icon: TrendingUp,        roles: ["CEO", "Manager", "Sales", "TeamLead", "Analyst"] },
+  { href: "/quotations",        label: "Quotations",          icon: FileText,          roles: ["CEO", "Manager", "Sales", "Accountant"] },
+  { href: "/invoices",          label: "Invoices",            icon: Receipt,           roles: ["CEO", "Manager", "Sales", "Accountant", "Cashier"] },
+  { href: "/revenue",           label: "Revenue & ROI",       icon: Wallet,            roles: ["CEO", "Manager", "Accountant", "Analyst", "Marketing"] },
+  { href: "/products",          label: "Products & Services", icon: Package,           roles: ["CEO", "Manager", "Cashier", "Analyst"] },
+  { href: "/assurance",         label: "Assurance",           icon: ShieldCheck,       roles: ["CEO", "Manager", "Analyst"] },
+  { href: "/admin/users",       label: "Employees",           icon: UserCog,           roles: ["HR", "CEO"] },
+  // ── Payment Approvals ──────────────────────────────────────
+  { href: "/payment-approvals", label: "Payment Approvals",   icon: CheckSquare,       roles: ["CEO", "Manager"] },
+  // ── Sales-specific ─────────────────────────────────────────
+  { href: "/my-customers",      label: "My Customers",        icon: Users2,            roles: ["Sales"] },
+  { href: "/my-revenue",        label: "My Revenue",          icon: TrendingUp,        roles: ["Sales"] },
+  // ── Team Lead ──────────────────────────────────────────────
+  { href: "/team-performance",  label: "Team Performance",    icon: BarChart2,         roles: ["TeamLead"] },
+  // ── Accountant / Cashier ───────────────────────────────────
+  { href: "/payroll",           label: "Payroll",             icon: Banknote,          roles: ["CEO", "Accountant"] },
+  { href: "/cash-handover",     label: "Cash Handover",       icon: Handshake,         roles: ["CEO", "Accountant", "Cashier"] },
+  // ── IT ─────────────────────────────────────────────────────
+  { href: "/system-health",     label: "System Health",       icon: Activity,          roles: ["IT"] },
+  { href: "/change-requests",   label: "Change Requests",     icon: GitPullRequest,    roles: ["IT", "CEO"] },
 ]
+
 
 type EmployeeInfo = {
   full_name: string
